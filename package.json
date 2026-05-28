@@ -1,0 +1,12 @@
+{
+  "name": "pekitas-vercel-landing",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "node scripts/build-vercel.js",
+    "dev": "node scripts/build-vercel.js && npx serve dist"
+  },
+  "devDependencies": {
+    "serve": "^14.2.4"
+  }
+}

@@ -1597,6 +1597,12 @@
     url: "__SUPABASE_URL__",
     anonKey: "__SUPABASE_ANON_KEY__"
   };
+  window.PEKITAS_SUPABASE_REQUIRED = !!(
+    window.PEKITAS_SUPABASE_CONFIG.url &&
+    window.PEKITAS_SUPABASE_CONFIG.anonKey &&
+    !window.PEKITAS_SUPABASE_CONFIG.url.includes("__") &&
+    !window.PEKITAS_SUPABASE_CONFIG.anonKey.includes("__")
+  );
 
   window.PEKITAS_CREATE_SUPABASE_CLIENT = function() {
     const cfg = window.PEKITAS_SUPABASE_CONFIG || {};
@@ -1722,7 +1728,7 @@
 <!-- NAVIGATION -->
 <nav id="mainNav">
   <a href="#" class="nav-logo">
-    <img src="https://chthxgjajyqzandlntnw.supabase.co/storage/v1/object/public/product-images/products/6508397b82075856c659-bb8f0ce1.png" class="nav-logo-img" data-brand="logotipo" alt="Pekitas Sumita" onerror="this.style.opacity='.5'">
+    <img src="https://chthxgjajyqzandlntnw.supabase.co/storage/v1/object/public/product-images/6508397b82075856c659.png" class="nav-logo-img" data-brand="logotipo" alt="Pekitas Sumita" onerror="this.style.opacity='.5'">
   </a>
 
   <ul class="nav-links">
@@ -2014,7 +2020,7 @@
       <img
         class="loc-mascot-img"
         id="locationMascotImg"
-        src="https://chthxgjajyqzandlntnw.supabase.co/storage/v1/object/public/product-images/products/351c99df11daf233f950-0f680fec.png"
+        src="https://chthxgjajyqzandlntnw.supabase.co/storage/v1/object/public/product-images/351c99df11daf233f950.png"
         alt="Pekitas Sumita"
         onerror="this.style.opacity='0'"
       >
@@ -2203,13 +2209,13 @@
 
   function getAllProducts() {
     const p = window.PEKITAS_PRODUCTS;
-    if (p && Array.isArray(p) && p.length > 0) return p.filter(x => x.active !== false);
+    if (Array.isArray(p)) return p.filter(x => x.active !== false);
     return DEFAULT_PRODUCTS.filter(x => x.active !== false);
   }
 
   function getAllCategories() {
     const c = window.PEKITAS_CATEGORIES;
-    if (c && Array.isArray(c) && c.length > 0) return c.filter(x => x.active !== false);
+    if (Array.isArray(c)) return c.filter(x => x.active !== false);
     return DEFAULT_CATEGORIES.filter(x => x.active !== false);
   }
 
@@ -3142,13 +3148,33 @@
     }
   }
 
+  function showDataLoadError(message) {
+    const productsGrid = document.getElementById('productsGrid');
+    const categoriesGrid = document.getElementById('categoriesGrid');
+    const html = `<div style="grid-column:1/-1;text-align:center;padding:56px 20px;color:var(--text-mid);">
+      <p style="font-size:15px;margin-bottom:8px;">No se pudieron cargar los datos actualizados.</p>
+      <p style="font-size:13px;margin:0;">${message || 'Reintentá en unos segundos.'}</p>
+    </div>`;
+    if (productsGrid) productsGrid.innerHTML = html;
+    if (categoriesGrid) categoriesGrid.innerHTML = html;
+  }
+
   async function init() {
+    let remoteLoadFailed = false;
     try {
       if (typeof window.PEKITAS_LOAD_REMOTE_DATA === 'function') {
         await window.PEKITAS_LOAD_REMOTE_DATA();
       }
     } catch(e) {
+      remoteLoadFailed = true;
       console.warn('No se pudieron cargar datos desde Supabase:', e.message);
+    }
+
+    if (remoteLoadFailed && window.PEKITAS_SUPABASE_REQUIRED && !window.PEKITAS_PRODUCTS) {
+      applyBrandAssets();
+      showDataLoadError('La tienda esta conectada a Supabase, pero la lectura fallo. No se mostraran datos genericos.');
+      renderCart();
+      return;
     }
 
     const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
@@ -3578,4 +3604,3 @@
 
 </body>
 </html>
-

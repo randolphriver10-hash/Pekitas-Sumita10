@@ -253,8 +253,11 @@
   .hero-slide.z-top    { z-index: 2; }
   .hero-slide.z-bottom { z-index: 1; }
 
-  /* Slide (manual y la única transición automática): desplazamiento horizontal por transform */
+  /* Slide manual (drag/swipe/flechas/puntitos): desplazamiento horizontal por transform */
   .hero-slide.anim-slide { transition: transform .72s cubic-bezier(0.22, 1, 0.36, 1); }
+
+  /* Slide automático (la única transición al segundo banner): más lento que el manual */
+  .hero-slide.anim-slide-slow { transition: transform 1.8s cubic-bezier(0.22, 1, 0.36, 1); }
 
   /* Entrada inicial del primer banner al cargar la página: muy sutil */
   .hero-slide.anim-entrance {
@@ -3868,7 +3871,7 @@
   }
 
   // ── SLIDE (manual: flechas / puntitos / confirmación de drag; también la única transición automática) ──
-  function heroSlideTo(targetIdx){
+  function heroSlideTo(targetIdx, slow){
     const slides = heroSlides();
     const total = slides.length;
     if (total < 2 || heroTransitioning) return;
@@ -3877,10 +3880,12 @@
     const outEl = slides[heroIdx];
     const inEl = slides[targetIdx];
     const dirLeft = targetIdx > heroIdx; // banner de índice mayor => desliza a la izquierda
+    const animClass = slow ? 'anim-slide-slow' : 'anim-slide';
+    const duration = slow ? 1800 : 740;
     heroTransitioning = true;
 
-    outEl.classList.add('anim-slide', 'is-visible', 'z-bottom');
-    inEl.classList.add('anim-slide', 'is-visible', 'z-top');
+    outEl.classList.add(animClass, 'is-visible', 'z-bottom');
+    inEl.classList.add(animClass, 'is-visible', 'z-top');
 
     inEl.classList.add('no-anim');
     inEl.classList.remove('pos-left', 'pos-right', 'pos-center');
@@ -3900,10 +3905,10 @@
     heroLoadingHints();
 
     setTimeout(function(){
-      outEl.classList.remove('anim-slide', 'is-visible', 'z-bottom');
+      outEl.classList.remove(animClass, 'is-visible', 'z-bottom');
       inEl.classList.remove('z-top');
       heroTransitioning = false;
-    }, heroReduceMotion ? 0 : 740);
+    }, heroReduceMotion ? 0 : duration);
   }
 
   window.heroNext = function(){ heroManualGoTo(heroIdx + 1); };
@@ -3922,7 +3927,7 @@
     if (heroPaused || heroDragging || document.hidden) return;
     if (heroTotal() < 2) return;
     heroFirstAutoTickDone = true;
-    heroSlideTo(heroIdx + 1); // desliza como el swipe manual
+    heroSlideTo(heroIdx + 1, true); // desliza como el swipe manual, pero más lento
     clearInterval(heroTimer);
     heroTimer = null;
   }

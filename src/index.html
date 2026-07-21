@@ -3371,20 +3371,25 @@
 
   /* ── Hero: sin barras en mobile — el hero toma el mismo ratio que las imágenes ── */
   @media (max-width: 579px) {
-    .hero { height: auto; min-height: 0; aspect-ratio: 2 / 3; }
+    .hero { height: auto; min-height: 0; aspect-ratio: 2 / 3; padding: 0; }
   }
 
   /* ── Hero: puntitos indicadores / navegación manual ── */
   .hero-dots {
-    display: flex; gap: 7px; align-items: center; justify-content: center;
+    display: flex; gap: 10px; align-items: center; justify-content: center;
     margin-top: 22px;
   }
   .hero-dot {
-    width: 6px; height: 6px; border-radius: 50%;
-    background: rgba(255,255,255,.55); border: none; cursor: pointer; padding: 0;
+    width: 34px; height: 34px; padding: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: transparent; border: none; cursor: pointer;
+  }
+  .hero-dot::after {
+    content: ''; width: 6px; height: 6px; border-radius: 50%;
+    background: rgba(255,255,255,.55);
     transition: all .32s var(--ease);
   }
-  .hero-dot.active { background: rgba(255,255,255,.96); width: 22px; border-radius: 4px; }
+  .hero-dot.active::after { background: rgba(255,255,255,.96); width: 22px; border-radius: 4px; }
 
 </style>
 

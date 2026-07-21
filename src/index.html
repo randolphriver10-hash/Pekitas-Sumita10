@@ -2624,14 +2624,14 @@
 
         const prevSnap = track.style.scrollSnapType;
         track.style.scrollSnapType = 'none';
-        const duration = 1800;
+        const duration = 4200;
         const from = track.scrollLeft;
         const start = performance.now();
 
         function step(now) {
           if (cancelled) { track.style.scrollSnapType = prevSnap; return; }
           const t = Math.min(1, (now - start) / duration);
-          const eased = 1 - Math.pow(1 - t, 3);
+          const eased = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; // ease-in-out: parejo, sin arranque brusco
           track.scrollLeft = from + (maxScroll - from) * eased;
           if (t < 1) {
             requestAnimationFrame(step);

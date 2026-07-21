@@ -109,10 +109,8 @@
     top: var(--announce-h); left: 0; right: 0;
     z-index: 100;
     height: var(--nav-h);
-    background: rgba(250,246,241,.82);
-    backdrop-filter: blur(22px) saturate(1.5);
-    -webkit-backdrop-filter: blur(22px) saturate(1.5);
-    border-bottom: 1px solid var(--border-a);
+    background: transparent;
+    border-bottom: none;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -120,8 +118,8 @@
     transition: background .45s var(--ease), box-shadow .45s var(--ease), top .45s var(--ease);
   }
   nav.scrolled {
-    background: rgba(250,246,241,.97);
-    box-shadow: 0 1px 0 var(--border-b), 0 4px 28px rgba(44,36,32,.07);
+    background: transparent;
+    box-shadow: none;
   }
 
   .nav-logo-img {
@@ -3768,6 +3766,7 @@
       el.classList.add(i === 0 ? 'first-enter' : 'slide-mode');
     });
     heroRenderDots();
+    heroInitSwipe();
     // Trigger the first slide's fade-in-from-above on the next paint
     requestAnimationFrame(function(){
       requestAnimationFrame(function(){
@@ -3776,6 +3775,35 @@
     });
     heroResetTimer();
   };
+
+  // Swipe táctil: deslizar el dedo para cambiar de banner manualmente
+  function heroInitSwipe(){
+    const el = document.getElementById('heroCarousel');
+    if (!el || el._swipeInit) return;
+    el._swipeInit = true;
+    let startX = 0, startY = 0, moved = false;
+    el.addEventListener('touchstart', function(e){
+      if (e.touches.length === 1) {
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        moved = false;
+      }
+    }, { passive: true });
+    el.addEventListener('touchmove', function(e){
+      if (Math.abs(e.touches[0].clientX - startX) > 12) moved = true;
+    }, { passive: true });
+    el.addEventListener('touchend', function(e){
+      if (!moved) return;
+      const touch = e.changedTouches[0];
+      const diffX = touch.clientX - startX;
+      const diffY = touch.clientY - startY;
+      if (Math.abs(diffX) < 40 || Math.abs(diffX) < Math.abs(diffY)) return;
+      const total = heroSlides().length;
+      if (total < 2) return;
+      const dir = diffX < 0 ? 1 : -1; // swipe left = next, swipe right = previous
+      window.heroGoTo((heroIdx + dir + total) % total);
+    }, { passive: true });
+  }
 
   document.addEventListener('DOMContentLoaded', function(){
     if (document.getElementById('heroCarousel')) window.heroCarouselRestart();

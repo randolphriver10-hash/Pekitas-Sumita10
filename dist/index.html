@@ -2595,6 +2595,54 @@
 
     grid.innerHTML = featured.map((p, i) => productCardHTML(p, delays[i % 4], allTags, hoverEnabled, lowStockThreshold)).join('');
     document.querySelectorAll('#featuredProductsGrid .reveal').forEach(r => observer.observe(r));
+    initFeaturedAutoSlide(grid);
+  }
+
+  // ── Auto-slide: recorre el carrusel de "Productos más elegidos" una sola vez,
+  //    al entrar en pantalla, para que se vean todos sin que el visitante deslice ──
+  let featuredAutoSlideDone = false;
+  function initFeaturedAutoSlide(track) {
+    if (!track || featuredAutoSlideDone || track._autoSlideInit) return;
+    track._autoSlideInit = true;
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting || featuredAutoSlideDone) return;
+        if (window.innerWidth >= 1024) { io.disconnect(); return; } // desktop: grid estático de 5, ya se ve todo
+        const maxScroll = track.scrollWidth - track.clientWidth;
+        if (maxScroll <= 4) { io.disconnect(); return; } // no hay overflow real, nada que recorrer
+
+        featuredAutoSlideDone = true;
+        io.disconnect();
+
+        let cancelled = false;
+        const cancel = function () { cancelled = true; };
+        track.addEventListener('pointerdown', cancel, { once: true, passive: true });
+        track.addEventListener('touchstart', cancel, { once: true, passive: true });
+        track.addEventListener('wheel', cancel, { once: true, passive: true });
+
+        const prevSnap = track.style.scrollSnapType;
+        track.style.scrollSnapType = 'none';
+        const duration = 1800;
+        const from = track.scrollLeft;
+        const start = performance.now();
+
+        function step(now) {
+          if (cancelled) { track.style.scrollSnapType = prevSnap; return; }
+          const t = Math.min(1, (now - start) / duration);
+          const eased = 1 - Math.pow(1 - t, 3);
+          track.scrollLeft = from + (maxScroll - from) * eased;
+          if (t < 1) {
+            requestAnimationFrame(step);
+          } else {
+            track.style.scrollSnapType = prevSnap;
+          }
+        }
+        requestAnimationFrame(step);
+      });
+    }, { threshold: 0.4 });
+    io.observe(track);
   }
 
   // ─── SEARCH PANEL ────────────────────────────────────────────────────────────

@@ -1884,14 +1884,16 @@
   </div>
 </section>
 
-<!-- CATEGORÍAS -->
-<section class="categories" id="categorias">
-  <div class="categories-header reveal">
-    <p class="section-eyebrow">Encontrá lo que buscás</p>
-    <h2 class="section-title">Nuestras <em>categorías</em></h2>
+<!-- PRODUCTOS MÁS ELEGIDOS -->
+<section class="featured-products" id="elegidos" style="display:none;">
+  <div class="products-header reveal">
+    <div>
+      <p class="section-eyebrow">Lo que más se llevan</p>
+      <h2 class="section-title">Productos más <em>elegidos</em></h2>
+    </div>
   </div>
 
-  <div class="categories-grid" id="categoriesGrid">
+  <div class="featured-products-track" id="featuredProductsGrid">
   </div>
 </section>
 
@@ -1989,7 +1991,16 @@
   </div>
 </section>
 
+<!-- CATEGORÍAS -->
+<section class="categories" id="categorias">
+  <div class="categories-header reveal">
+    <p class="section-eyebrow">Encontrá lo que buscás</p>
+    <h2 class="section-title">Nuestras <em>categorías</em></h2>
+  </div>
 
+  <div class="categories-grid" id="categoriesGrid">
+  </div>
+</section>
 
 <!-- NOSOTROS -->
 <section class="nosotros" id="nosotros">
@@ -2455,6 +2466,70 @@
     renderProductsSection();
   }
 
+  // Disponibilidad: misma lógica que ya usa cada tarjeta (soldOut manual o stock=0). Única fuente de verdad.
+  function isProductAvailable(p) {
+    if (p.soldOut) return false;
+    const stockNum = typeof p.stock === 'number' ? p.stock : null;
+    return !(stockNum !== null && stockNum === 0);
+  }
+
+  // Tarjeta de producto reutilizada tanto por "Todos los productos" como por "Productos más elegidos"
+  function productCardHTML(p, delayClass, allTags, hoverEnabled, lowStockThreshold) {
+    const colorDots = (p.colors || []).map(c => `<div class="color-dot" style="background:${c};"></div>`).join('');
+    const priceOldHTML = p.priceOld ? `<span class="price-old">${formatPrice(p.priceOld)}</span>` : '';
+    const badgeHTML = p.badge ? `<span class="product-badge ${p.badgeClass || ''}">${p.badge}</span>` : '';
+
+    const stockNum = typeof p.stock === 'number' ? p.stock : null;
+    const soldOutManual = !!p.soldOut;
+    const stockHTML = (!soldOutManual && stockNum !== null && stockNum > 0 && stockNum <= lowStockThreshold)
+      ? `<div class="stock-alert">⚡ Últimas ${stockNum} unidades</div>` : '';
+    const outOfStockHTML = (!soldOutManual && stockNum !== null && stockNum === 0)
+      ? `<div class="stock-alert" style="background:rgba(44,36,32,0.65)">Sin stock</div>` : '';
+    const soldOutBannerHTML = soldOutManual ? `<div class="sold-out-banner"><span>Agotado</span></div>` : '';
+
+    const productTagBadges = (p.productTags || [])
+      .map(tid => allTags.find(t => t.id === tid)).filter(Boolean)
+      .map(t => `<span class="product-tag-badge" style="background:${t.bg};color:${t.textColor};border:1px solid ${t.border||'transparent'}">${t.icon||''} ${t.name}</span>`)
+      .join('');
+    const tagStripHTML = productTagBadges ? `<div class="product-tag-strip">${productTagBadges}</div>` : '';
+
+    const primaryHover = (p.imgHovers && p.imgHovers.length > 0) ? p.imgHovers[0] : (p.imgHover || '');
+    const hoverHTML = hoverEnabled && primaryHover ? `<div class="product-img-hover"><img src="${primaryHover}" alt="" loading="lazy" onerror="this.parentElement.style.background='linear-gradient(145deg,#EDD5CB,#E0C8BC)';this.style.display='none'"></div>` : '';
+
+    const safeId   = (p.id||'').replace(/'/g,"\'");
+    const safeName = (p.name||'').replace(/'/g,"\'");
+    const safeSub  = (p.sub||p.category||'').replace(/'/g,"\'");
+    const safeImg  = (p.img||'').replace(/'/g,"\'");
+    const isOos    = soldOutManual || (stockNum !== null && stockNum === 0);
+
+    return `
+      <div class="product-card reveal ${delayClass}" onclick="${isOos?'':"openProductModal('" + safeId + "')"}" style="cursor:${isOos?'default':'pointer'};${isOos?'opacity:0.7':''}">
+        <div class="product-img-wrap">
+          <div class="product-img-main">
+            <img src="${p.img || ''}" alt="${p.name}" loading="lazy" onerror="this.parentElement.style.background='linear-gradient(145deg,#F2E4DC,#E8D8CE)';this.style.display='none'">
+          </div>
+          ${hoverHTML}
+          ${soldOutBannerHTML}
+          ${badgeHTML}
+          ${tagStripHTML}
+          ${stockHTML}
+          ${outOfStockHTML}
+          <div class="product-actions">
+            ${isOos ? '<span style="flex:1;text-align:center;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-mid);padding:10px 0;">Sin stock disponible</span>' : `<button class="btn-add-cart" onclick="event.stopPropagation();addToCart(event,{id:'${safeId}',name:'${safeName}',price:${p.price},sub:'${safeSub}',img:'${safeImg}'})">Agregar al carrito</button>`}
+            <button class="btn-wishlist" title="Guardar" onclick="event.stopPropagation()"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>
+          </div>
+        </div>
+        <div class="product-name">${p.name}</div>
+        <div class="product-sub">${p.sub || p.category || ''}</div>
+        <div class="product-price">
+          <span class="price-current">${formatPrice(p.price)}</span>
+          ${priceOldHTML}
+        </div>
+        <div class="color-dots">${colorDots}</div>
+      </div>
+    `;
+  }
+
   function renderProductsSection() {
     const allProducts = getAllProducts();
     let products = currentCategoryFilter
@@ -2468,6 +2543,14 @@
     }
     const grid = document.getElementById('productsGrid');
     if (!grid) return;
+
+    // Disponibles primero, agotados después; dentro de cada grupo se respeta el orden configurado en el admin
+    products = [...products].sort((a, b) => {
+      const aOos = isProductAvailable(a) ? 0 : 1;
+      const bOos = isProductAvailable(b) ? 0 : 1;
+      if (aOos !== bOos) return aOos - bOos;
+      return (a.order || 0) - (b.order || 0);
+    });
 
     const delays = ['reveal-delay-1','reveal-delay-2','reveal-delay-3','reveal-delay-4'];
     const settings = window.PEKITAS_SETTINGS || {};
@@ -2487,63 +2570,32 @@
       return;
     }
 
-    grid.innerHTML = products.map((p, i) => {
-      const colorDots = (p.colors || []).map(c => `<div class="color-dot" style="background:${c};"></div>`).join('');
-      const priceOldHTML = p.priceOld ? `<span class="price-old">${formatPrice(p.priceOld)}</span>` : '';
-      const badgeHTML = p.badge ? `<span class="product-badge ${p.badgeClass || ''}">${p.badge}</span>` : '';
-
-      const stockNum = typeof p.stock === 'number' ? p.stock : null;
-      const soldOutManual = !!p.soldOut;
-      const stockHTML = (!soldOutManual && stockNum !== null && stockNum > 0 && stockNum <= lowStockThreshold)
-        ? `<div class="stock-alert">⚡ Últimas ${stockNum} unidades</div>` : '';
-      const outOfStockHTML = (!soldOutManual && stockNum !== null && stockNum === 0)
-        ? `<div class="stock-alert" style="background:rgba(44,36,32,0.65)">Sin stock</div>` : '';
-      const soldOutBannerHTML = soldOutManual ? `<div class="sold-out-banner"><span>Agotado</span></div>` : '';
-
-      const productTagBadges = (p.productTags || [])
-        .map(tid => allTags.find(t => t.id === tid)).filter(Boolean)
-        .map(t => `<span class="product-tag-badge" style="background:${t.bg};color:${t.textColor};border:1px solid ${t.border||'transparent'}">${t.icon||''} ${t.name}</span>`)
-        .join('');
-      const tagStripHTML = productTagBadges ? `<div class="product-tag-strip">${productTagBadges}</div>` : '';
-
-      const primaryHover = (p.imgHovers && p.imgHovers.length > 0) ? p.imgHovers[0] : (p.imgHover || '');
-      const hoverHTML = hoverEnabled && primaryHover ? `<div class="product-img-hover"><img src="${primaryHover}" alt="" loading="lazy" onerror="this.parentElement.style.background='linear-gradient(145deg,#EDD5CB,#E0C8BC)';this.style.display='none'"></div>` : '';
-
-      const safeId   = (p.id||'').replace(/'/g,"\'");
-      const safeName = (p.name||'').replace(/'/g,"\'");
-      const safeSub  = (p.sub||p.category||'').replace(/'/g,"\'");
-      const safeImg  = (p.img||'').replace(/'/g,"\'");
-      const isOos    = soldOutManual || (stockNum !== null && stockNum === 0);
-
-      return `
-        <div class="product-card reveal ${delays[i % 4]}" onclick="${isOos?'':"openProductModal('" + safeId + "')"}" style="cursor:${isOos?'default':'pointer'};${isOos?'opacity:0.7':''}">
-          <div class="product-img-wrap">
-            <div class="product-img-main">
-              <img src="${p.img || ''}" alt="${p.name}" loading="lazy" onerror="this.parentElement.style.background='linear-gradient(145deg,#F2E4DC,#E8D8CE)';this.style.display='none'">
-            </div>
-            ${hoverHTML}
-            ${soldOutBannerHTML}
-            ${badgeHTML}
-            ${tagStripHTML}
-            ${stockHTML}
-            ${outOfStockHTML}
-            <div class="product-actions">
-              ${isOos ? '<span style="flex:1;text-align:center;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-mid);padding:10px 0;">Sin stock disponible</span>' : `<button class="btn-add-cart" onclick="event.stopPropagation();addToCart(event,{id:'${safeId}',name:'${safeName}',price:${p.price},sub:'${safeSub}',img:'${safeImg}'})">Agregar al carrito</button>`}
-              <button class="btn-wishlist" title="Guardar" onclick="event.stopPropagation()"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>
-            </div>
-          </div>
-          <div class="product-name">${p.name}</div>
-          <div class="product-sub">${p.sub || p.category || ''}</div>
-          <div class="product-price">
-            <span class="price-current">${formatPrice(p.price)}</span>
-            ${priceOldHTML}
-          </div>
-          <div class="color-dots">${colorDots}</div>
-        </div>
-      `;
-    }).join('');
+    grid.innerHTML = products.map((p, i) => productCardHTML(p, delays[i % 4], allTags, hoverEnabled, lowStockThreshold)).join('');
 
     document.querySelectorAll('#productsGrid .reveal').forEach(r => observer.observe(r));
+  }
+
+  // ─── PRODUCTOS MÁS ELEGIDOS ─────────────────────────────────────────────────
+  function renderFeaturedProductsSection() {
+    const section = document.getElementById('elegidos');
+    const grid = document.getElementById('featuredProductsGrid');
+    if (!grid) return;
+
+    const settings = window.PEKITAS_SETTINGS || {};
+    const ids = Array.isArray(settings.featuredProductIds) ? settings.featuredProductIds : [];
+    const allProducts = getAllProducts();
+    const featured = ids.map(id => allProducts.find(p => p.id === id)).filter(Boolean).slice(0, 5);
+
+    if (section) section.style.display = featured.length ? '' : 'none';
+    if (!featured.length) { grid.innerHTML = ''; return; }
+
+    const hoverEnabled = settings.hoverEnabled !== false;
+    const lowStockThreshold = settings.lowStockThreshold || 5;
+    const allTags = window.PEKITAS_TAGS || [];
+    const delays = ['reveal-delay-1','reveal-delay-2','reveal-delay-3','reveal-delay-4'];
+
+    grid.innerHTML = featured.map((p, i) => productCardHTML(p, delays[i % 4], allTags, hoverEnabled, lowStockThreshold)).join('');
+    document.querySelectorAll('#featuredProductsGrid .reveal').forEach(r => observer.observe(r));
   }
 
   // ─── SEARCH PANEL ────────────────────────────────────────────────────────────
@@ -3295,6 +3347,7 @@
     }
     applyBrandAssets();
     renderCategoriesSection();
+    renderFeaturedProductsSection();
     renderFilterBar();
     renderProductsSection();
     renderTrustSection();
@@ -3307,6 +3360,7 @@
           await window.PEKITAS_LOAD_REMOTE_DATA();
           applyBrandAssets();
           renderCategoriesSection();
+          renderFeaturedProductsSection();
           renderFilterBar();
           renderProductsSection();
           renderTrustSection();
@@ -3449,6 +3503,33 @@
     transition: all .32s var(--ease);
   }
   .hero-dot.active::after { background: rgba(255,255,255,.96); width: 22px; border-radius: 4px; }
+
+  /* ── Productos más elegidos: grid de 5 en desktop, carrusel táctil en mobile ── */
+  .featured-products-track {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 24px;
+  }
+  @media (max-width: 1023px) {
+    .featured-products-track {
+      display: flex;
+      gap: 14px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scroll-snap-type: x proximity;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-x: contain;
+      padding-bottom: 6px;
+      scrollbar-width: none;
+    }
+    .featured-products-track::-webkit-scrollbar { display: none; }
+    .featured-products-track .product-card {
+      flex: 0 0 auto;
+      width: 33%;
+      min-width: 150px;
+      scroll-snap-align: start;
+    }
+  }
 
 </style>
 

@@ -3821,7 +3821,7 @@
   function heroGetInterval(){
     const s = window.PEKITAS_SETTINGS || {};
     const secs = parseFloat(s.heroCarouselSpeed);
-    return (secs && secs >= 3) ? secs * 1000 : 5500; // default 5.5s (rango pedido: 5-6s)
+    return (secs && secs >= 1.5) ? secs * 1000 : 5500; // admite el mismo mínimo que el panel admin (1.5s)
   }
   const heroReduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 

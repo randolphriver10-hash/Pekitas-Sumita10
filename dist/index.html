@@ -293,7 +293,7 @@
 
   .hero-content {
     position: absolute; z-index: 3;
-    left: 50%; bottom: clamp(20px, 6%, 44px); transform: translateX(-50%);
+    left: 50%; bottom: clamp(10px, 3%, 22px); transform: translateX(-50%);
     text-align: center; padding: 0 32px; width: 100%; max-width: 780px;
   }
 
@@ -337,23 +337,23 @@
   }
 
   .hero-cta {
-    display: flex; flex-direction: column; align-items: center; gap: 10px;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
     opacity: 0; animation: riseUp 1s var(--ease) .80s forwards;
   }
   .hero-cta .btn-primary,
   .hero-cta .btn-secondary {
-    width: 70%; max-width: 320px; min-height: 50px;
-    padding: 0 20px; font-size: 10.5px;
+    width: 58%; max-width: 260px; min-height: 40px;
+    padding: 0 16px; font-size: 9px;
     justify-content: center; box-sizing: border-box;
   }
-  .hero-cta .btn-secondary { width: 62%; }
+  .hero-cta .btn-secondary { width: 50%; }
 
   @media (min-width: 640px) {
-    .hero-cta { flex-direction: row; gap: 12px; }
+    .hero-cta { flex-direction: row; gap: 10px; }
     .hero-cta .btn-primary,
     .hero-cta .btn-secondary {
-      width: auto; max-width: none; min-height: 46px;
-      padding: 0 30px; font-size: 11px;
+      width: auto; max-width: none; min-height: 38px;
+      padding: 0 22px; font-size: 10px;
     }
   }
 
@@ -3488,20 +3488,20 @@
 
   /* ── Hero: puntitos indicadores / navegación manual ── */
   .hero-dots {
-    display: flex; gap: 6px; align-items: center; justify-content: center;
-    margin-top: 14px;
+    display: flex; gap: 4px; align-items: center; justify-content: center;
+    margin-top: 10px;
   }
   .hero-dot {
-    width: 44px; height: 44px; padding: 0;
+    width: 32px; height: 32px; padding: 0;
     display: flex; align-items: center; justify-content: center;
     background: transparent; border: none; cursor: pointer;
   }
   .hero-dot::after {
-    content: ''; width: 6px; height: 6px; border-radius: 50%;
+    content: ''; width: 4px; height: 4px; border-radius: 50%;
     background: rgba(255,255,255,.55);
     transition: all .32s var(--ease);
   }
-  .hero-dot.active::after { background: rgba(255,255,255,.96); width: 22px; border-radius: 4px; }
+  .hero-dot.active::after { background: rgba(255,255,255,.96); width: 16px; border-radius: 4px; }
 
   /* ── Productos más elegidos: grid de 5 en desktop, carrusel táctil en mobile ── */
   .featured-products-track {

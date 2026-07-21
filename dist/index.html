@@ -593,19 +593,20 @@
      NUEVA COLECCION
   ══════════════════════════════════════════════════════════════ */
   .nueva { background: var(--cream); }
-  .nc-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; }
-  .nc-text { max-width: 490px; }
-  .nc-text .section-title { margin-bottom: 28px; }
-  .nc-desc { color: var(--text-mid); line-height: 1.88; margin-bottom: 42px; font-size: 15px; }
-  .nc-visual { position: relative; height: 620px; border-radius: var(--r4); overflow: hidden; box-shadow: var(--sh-lg); }
+  .nc-inner {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 36px; max-width: 1100px; margin: 0 auto; text-align: center;
+  }
+  .nc-heading {
+    font-family: var(--font-display);
+    font-size: clamp(28px, 3.4vw, 40px);
+    font-weight: 300; line-height: 1.15; color: var(--text-dark);
+  }
+  .nc-visual { position: relative; width: 100%; height: 620px; border-radius: var(--r4); overflow: hidden; box-shadow: var(--sh-lg); }
   .nc-visual img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .85s var(--ease); }
   .nc-visual:hover img { transform: scale(1.04); }
   .nc-visual-overlay { position: absolute; inset: 0; background: linear-gradient(160deg, rgba(237,213,203,.12) 0%, rgba(44,36,32,.08) 100%); }
-  .nc-float-card { position: absolute; background: rgba(254,252,249,.92); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); border-radius: var(--r3); padding: 20px 24px; box-shadow: var(--sh-md); z-index: 2; border: 1px solid rgba(255,255,255,.85); }
-  .nc-float-card.top { top: 26px; right: -20px; }
-  .nc-float-card.bottom { bottom: 44px; left: -20px; }
-  .nc-float-label { font-size: 9.5px; letter-spacing: .26em; text-transform: uppercase; color: var(--text-light); margin-bottom: 5px; }
-  .nc-float-value { font-family: var(--font-display); font-size: 22px; font-weight: 400; color: var(--text-dark); }
+  .nc-cta { width: 100%; max-width: 420px; text-align: center; }
 
   /* ══════════════════════════════════════════════════════════════
      FILTER BAR
@@ -975,10 +976,8 @@
     .hamburger { display: flex; }
     section { padding: 72px 28px; }
     #newsletter { padding: 72px 28px; }
-    .nc-inner { grid-template-columns: 1fr; gap: 48px; }
+    .nc-inner { gap: 32px; }
     .nc-visual { height: 400px; }
-    .nc-float-card.top { right: 0; }
-    .nc-float-card.bottom { left: 0; }
     .nosotros { grid-template-columns: 1fr; }
     .nosotros-visual { min-height: 360px; }
     .nosotros-logo-wrap { padding: 40px; }
@@ -1254,11 +1253,6 @@
     /* Carrusel NC: altura adaptable y object-fit correcto */
     .nc-visual { height: 400px; overflow: hidden; }
     .nc-slide img { object-fit: cover; object-position: center top; }
-    /* Tarjetas flotantes: no se salen de pantalla */
-    .nc-float-card.top  { top: 14px; right: 10px; padding: 14px 18px; }
-    .nc-float-card.bottom { bottom: 28px; left: 10px; padding: 14px 18px; }
-    .nc-float-value { font-size: 18px; }
-    .nc-float-label { font-size: 9px; }
   }
 
   @media (max-width: 580px) {
@@ -1272,21 +1266,6 @@
       object-fit: cover;
       object-position: center top; /* prioriza cara/busto, no recorta cabeza */
     }
-    /* Float cards: discretas y pequeñas para no tapar la imagen */
-    .nc-float-card {
-      padding: 7px 11px !important;
-      border-radius: 10px !important;
-      box-shadow: 0 2px 10px rgba(44,36,32,.10) !important;
-      background: rgba(254,252,249,.88) !important;
-    }
-    .nc-float-card.top  { top: 10px; right: 10px; }
-    .nc-float-card.bottom { bottom: 14px; left: 10px; }
-    .nc-float-label {
-      font-size: 7.5px !important;
-      letter-spacing: .20em;
-      margin-bottom: 2px !important;
-    }
-    .nc-float-value { font-size: 13px !important; }
   }
 
   /* ══════════════════════════════════════════════════════════════
@@ -1894,17 +1873,9 @@
 <!-- NUEVA COLECCIÓN -->
 <section class="nueva-coleccion" id="nueva">
   <div class="nc-inner">
-    <div class="nc-text reveal">
-      <p class="section-eyebrow">Primavera — Verano 2025</p>
-      <h2 class="section-title">La nueva<br><em>colección</em><br>ya llegó</h2>
-      <p class="nc-desc">
-        Diseñada con telas suaves, colores que alegran el día y siluetas que invitan al movimiento libre. Cada prenda de pekitas sumita nació para acompañar a los más chicos en cada aventura cotidiana.
-      </p>
-      <a href="#destacados" class="btn-primary" style="text-decoration:none;display:inline-block;">Descubrir ahora</a>
+    <h2 class="nc-heading reveal">Nueva colección de primavera</h2>
 
-    </div>
-
-    <div class="nc-visual reveal reveal-delay-2" id="ncVisual">
+    <div class="nc-visual reveal reveal-delay-1" id="ncVisual">
       <!-- Carousel slides -->
       <div class="nc-carousel" id="ncCarousel">
         <div class="nc-slide active">
@@ -1939,17 +1910,9 @@
         <button class="nc-dot" onclick="ncGoTo(2)"></button>
         <button class="nc-dot" onclick="ncGoTo(3)"></button>
       </div>
-
-      <!-- Float cards -->
-      <div class="nc-float-card top">
-        <div class="nc-float-label">Tela</div>
-        <div class="nc-float-value">100% orgánica</div>
-      </div>
-      <div class="nc-float-card bottom">
-        <div class="nc-float-label">Piezas nuevas</div>
-        <div class="nc-float-value" id="productCountDisplay">+48 prendas</div>
-      </div>
     </div>
+
+    <a href="#destacados" class="btn-primary nc-cta reveal reveal-delay-2" style="text-decoration:none;display:inline-block;">Descubrir ahora</a>
   </div>
 </section>
 

@@ -247,7 +247,7 @@
   /* First appearance: fade + un-blur, dropping in from above */
   .hero-slide.first-enter {
     filter: blur(16px); transform: translateY(-32px);
-    transition: opacity 1.15s var(--ease), filter 1.15s var(--ease), transform 1.15s var(--ease);
+    transition: opacity 2s var(--ease), filter 2s var(--ease), transform 2s var(--ease);
   }
   .hero-slide.first-enter.active { opacity: 1; filter: blur(0); transform: translateY(0); z-index: 2; }
 
@@ -255,7 +255,7 @@
   .hero-slide.slide-mode {
     opacity: 1;
     transform: translateX(-100%);
-    transition: transform .95s var(--ease);
+    transition: transform 1.5s var(--ease);
   }
   .hero-slide.slide-mode.active { transform: translateX(0); z-index: 2; }
   .hero-slide.slide-mode.exiting { transform: translateX(100%); z-index: 1; }
@@ -1828,6 +1828,7 @@
       <a href="#nueva" class="btn-primary">Explorar colección</a>
       <a href="#categorias" class="btn-secondary">Ver categorías</a>
     </div>
+    <div class="hero-dots" id="heroDots"></div>
   </div>
 
   <div class="hero-scroll-hint">
@@ -3368,6 +3369,22 @@
     background:#fff; width:22px; border-radius:4px;
   }
 
+  /* ── Hero: sin barras en mobile — el hero toma el mismo ratio que las imágenes ── */
+  @media (max-width: 579px) {
+    .hero { height: auto; min-height: 0; aspect-ratio: 2 / 3; }
+  }
+
+  /* ── Hero: puntitos indicadores / navegación manual ── */
+  .hero-dots {
+    display: flex; gap: 7px; align-items: center; justify-content: center;
+    margin-top: 22px;
+  }
+  .hero-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: rgba(255,255,255,.55); border: none; cursor: pointer; padding: 0;
+    transition: all .32s var(--ease);
+  }
+  .hero-dot.active { background: rgba(255,255,255,.96); width: 22px; border-radius: 4px; }
 
 </style>
 
@@ -3651,6 +3668,8 @@
 (function(){
   let heroIdx = 0;
   let heroTimer = null;
+  let heroAutoCount = 0;
+  const HERO_AUTO_LIMIT = 2; // solo se desliza automático 2 veces, después es manual (puntitos)
 
   function heroSlides(){
     return Array.from(document.querySelectorAll('#heroCarousel .hero-slide'));
@@ -3662,14 +3681,32 @@
     return Math.max(1.5, secs) * 1000;
   }
 
-  // Automatic change: outgoing slide exits to the right, incoming slide enters from the left
-  function heroAdvance(){
+  function heroUpdateDots(){
+    document.querySelectorAll('#heroDots .hero-dot').forEach(function(d, i){
+      d.classList.toggle('active', i === heroIdx);
+    });
+  }
+
+  function heroRenderDots(){
+    const dotsEl = document.getElementById('heroDots');
+    if (!dotsEl) return;
+    const total = heroSlides().length;
+    if (total < 2) { dotsEl.innerHTML = ''; return; }
+    let html = '';
+    for (let i = 0; i < total; i++) {
+      html += '<button type="button" class="hero-dot' + (i === heroIdx ? ' active' : '') +
+        '" onclick="heroGoTo(' + i + ')" aria-label="Ver banner ' + (i + 1) + '"></button>';
+    }
+    dotsEl.innerHTML = html;
+  }
+
+  // Outgoing slide exits to the right, incoming slide enters from the left
+  function heroTransitionTo(targetIdx){
     const slides = heroSlides();
     const total = slides.length;
-    if (total < 2) return;
+    if (total < 2 || targetIdx === heroIdx) return;
     const outEl = slides[heroIdx];
-    const nextIdx = (heroIdx + 1) % total;
-    const inEl = slides[nextIdx];
+    const inEl = slides[targetIdx];
 
     outEl.classList.remove('first-enter', 'active');
     outEl.classList.add('slide-mode', 'exiting');
@@ -3685,13 +3722,34 @@
       outEl.classList.remove('exiting');
       void outEl.offsetWidth;
       outEl.classList.remove('no-anim');
-    }, 1000);
+    }, 1600);
 
-    heroIdx = nextIdx;
+    heroIdx = targetIdx;
+    heroUpdateDots();
   }
+
+  function heroAdvance(){
+    const total = heroSlides().length;
+    if (total < 2) return;
+    heroTransitionTo((heroIdx + 1) % total);
+    heroAutoCount++;
+    if (heroAutoCount >= HERO_AUTO_LIMIT) {
+      clearInterval(heroTimer);
+      heroTimer = null;
+    }
+  }
+
+  // Navegación manual (puntitos)
+  window.heroGoTo = function(i){
+    clearInterval(heroTimer);
+    heroTimer = null;
+    heroTransitionTo(i);
+  };
 
   function heroResetTimer(){
     clearInterval(heroTimer);
+    heroTimer = null;
+    heroAutoCount = 0;
     if (heroSlides().length < 2) return;
     heroTimer = setInterval(heroAdvance, heroGetInterval());
   }
@@ -3704,6 +3762,7 @@
       el.classList.remove('first-enter', 'slide-mode', 'active', 'exiting', 'no-anim');
       el.classList.add(i === 0 ? 'first-enter' : 'slide-mode');
     });
+    heroRenderDots();
     // Trigger the first slide's fade-in-from-above on the next paint
     requestAnimationFrame(function(){
       requestAnimationFrame(function(){

@@ -253,10 +253,7 @@
   .hero-slide.z-top    { z-index: 2; }
   .hero-slide.z-bottom { z-index: 1; }
 
-  /* Autoplay: crossfade puro por opacidad, sin desplazamiento */
-  .hero-slide.anim-fade { transition: opacity .82s cubic-bezier(0.22, 1, 0.36, 1); }
-
-  /* Manual (drag/swipe/flechas/puntitos): desplazamiento horizontal por transform */
+  /* Slide (manual y la única transición automática): desplazamiento horizontal por transform */
   .hero-slide.anim-slide { transition: transform .72s cubic-bezier(0.22, 1, 0.36, 1); }
 
   /* Entrada inicial del primer banner al cargar la página: muy sutil */
@@ -3870,39 +3867,7 @@
     });
   }
 
-  // ── CROSSFADE (solo autoplay) — opacidad únicamente, sin desplazamiento ──
-  function heroCrossfadeTo(targetIdx){
-    const slides = heroSlides();
-    const total = slides.length;
-    if (total < 2 || heroTransitioning) return;
-    targetIdx = ((targetIdx % total) + total) % total;
-    if (targetIdx === heroIdx) return;
-    const outEl = slides[heroIdx];
-    const inEl = slides[targetIdx];
-    heroTransitioning = true;
-
-    [outEl, inEl].forEach(function(el){
-      el.classList.remove('pos-left', 'pos-right', 'no-anim', 'anim-slide');
-      el.classList.add('pos-center', 'anim-fade');
-    });
-    inEl.classList.add('z-top');
-    outEl.classList.add('z-bottom');
-    void inEl.offsetWidth;
-    inEl.classList.add('is-visible');
-    outEl.classList.remove('is-visible');
-
-    heroIdx = targetIdx;
-    heroUpdateControls();
-    heroLoadingHints();
-
-    setTimeout(function(){
-      outEl.classList.remove('anim-fade', 'z-bottom');
-      inEl.classList.remove('z-top');
-      heroTransitioning = false;
-    }, heroReduceMotion ? 0 : 850);
-  }
-
-  // ── SLIDE (manual: flechas / puntitos / confirmación de drag) — solo transform ──
+  // ── SLIDE (manual: flechas / puntitos / confirmación de drag; también la única transición automática) ──
   function heroSlideTo(targetIdx){
     const slides = heroSlides();
     const total = slides.length;
@@ -3914,8 +3879,6 @@
     const dirLeft = targetIdx > heroIdx; // banner de índice mayor => desliza a la izquierda
     heroTransitioning = true;
 
-    outEl.classList.remove('anim-fade');
-    inEl.classList.remove('anim-fade');
     outEl.classList.add('anim-slide', 'is-visible', 'z-bottom');
     inEl.classList.add('anim-slide', 'is-visible', 'z-top');
 
@@ -3954,20 +3917,19 @@
     heroResumeAutoplay();
   }
 
-  // ── AUTOPLAY ──────────────────────────────────────────────────────────
+  // ── AUTOPLAY: una única transición automática (al segundo banner), después queda quieto ──
   function heroAutoTick(){
     if (heroPaused || heroDragging || document.hidden) return;
     if (heroTotal() < 2) return;
-    if (!heroFirstAutoTickDone) {
-      heroFirstAutoTickDone = true;
-      heroSlideTo(heroIdx + 1); // primera transición automática: desliza como el swipe manual
-      return;
-    }
-    heroCrossfadeTo(heroIdx + 1);
+    heroFirstAutoTickDone = true;
+    heroSlideTo(heroIdx + 1); // desliza como el swipe manual
+    clearInterval(heroTimer);
+    heroTimer = null;
   }
   function heroStartAutoplay(){
     clearInterval(heroTimer);
     heroTimer = null;
+    if (heroFirstAutoTickDone) return; // ya ocurrió la única transición automática permitida
     if (heroTotal() < 2) return;
     heroTimer = setInterval(heroAutoTick, heroGetInterval());
   }

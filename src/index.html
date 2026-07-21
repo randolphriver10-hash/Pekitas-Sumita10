@@ -206,7 +206,7 @@
   ══════════════════════════════════════════════════════════════ */
   .hero {
     position: relative;
-    height: 125vh; min-height: 780px;
+    height: 70vh; min-height: 520px;
     display: flex; align-items: center; justify-content: center;
     overflow: hidden;
   }
@@ -1340,7 +1340,7 @@
      MEJORAS MOBILE — Hero responsive
   ══════════════════════════════════════════════════════════════ */
   @media (max-width: 580px) {
-    .hero { min-height: 100svh; }
+    .hero { min-height: 70svh; }
     .hero-title { font-size: 42px !important; line-height: 1.05; }
     .hero-subtitle { font-size: 13px; margin-bottom: 36px; }
     .hero-cta { gap: 10px; }
@@ -1564,7 +1564,7 @@
   @media (min-width: 768px) {
     nav { padding: 0 36px; }
     section { padding: 72px 36px; }
-    .hero { padding: 96px 36px 64px; min-height: 80dvh; }
+    .hero { padding: 96px 36px 64px; min-height: 70dvh; }
 
     #productsGrid {
       grid-template-columns: repeat(3, 1fr);
@@ -3479,9 +3479,9 @@
     background:#fff; width:22px; border-radius:4px;
   }
 
-  /* ── Hero: más presencia visual en mobile (~100dvh), manteniendo el cartel completo (object-fit:contain) ── */
+  /* ── Hero: 65-70% de la pantalla en mobile ── */
   @media (max-width: 579px) {
-    .hero { height: 100dvh; min-height: 0; aspect-ratio: auto; padding: 0; }
+    .hero { height: 70dvh; min-height: 0; aspect-ratio: auto; padding: 0; }
   }
 
   /* ── Hero: los botones/puntitos bajaron, ya no entra el hint de scroll ── */

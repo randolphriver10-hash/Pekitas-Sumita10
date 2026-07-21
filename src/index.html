@@ -240,11 +240,26 @@
   }
   .hero-slide {
     position: absolute; inset: 0;
-    opacity: 0; filter: blur(16px); transform: translateY(-32px);
+    opacity: 0;
+  }
+  .hero-slide img { width: 100%; height: 100%; object-fit: contain; object-position: center; display: block; }
+
+  /* First appearance: fade + un-blur, dropping in from above */
+  .hero-slide.first-enter {
+    filter: blur(16px); transform: translateY(-32px);
     transition: opacity 1.15s var(--ease), filter 1.15s var(--ease), transform 1.15s var(--ease);
   }
-  .hero-slide.active { opacity: 1; filter: blur(0); transform: translateY(0); z-index: 1; }
-  .hero-slide img { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
+  .hero-slide.first-enter.active { opacity: 1; filter: blur(0); transform: translateY(0); z-index: 2; }
+
+  /* Automatic rotation after the first slide: smooth slide-to-the-right */
+  .hero-slide.slide-mode {
+    opacity: 1;
+    transform: translateX(-100%);
+    transition: transform .95s var(--ease);
+  }
+  .hero-slide.slide-mode.active { transform: translateX(0); z-index: 2; }
+  .hero-slide.slide-mode.exiting { transform: translateX(100%); z-index: 1; }
+  .hero-slide.no-anim { transition: none !important; }
 
   .hero-scrim {
     position: absolute; inset: 0; z-index: 2; pointer-events: none;
@@ -3052,8 +3067,8 @@
       if (heroImgs.length) {
         const heroCarousel = document.getElementById('heroCarousel');
         if (heroCarousel) {
-          heroCarousel.innerHTML = heroImgs.map((url, i) =>
-            '<div class="hero-slide' + (i===0?' active':'') + '"><img src="' + url + '" alt="" loading="eager"></div>'
+          heroCarousel.innerHTML = heroImgs.map((url) =>
+            '<div class="hero-slide"><img src="' + url + '" alt="" loading="eager"></div>'
           ).join('');
         }
       }
@@ -3637,9 +3652,8 @@
   let heroIdx = 0;
   let heroTimer = null;
 
-  function heroUpdate(){
-    const slides = document.querySelectorAll('#heroCarousel .hero-slide');
-    slides.forEach((s,i)=> s.classList.toggle('active', i===heroIdx));
+  function heroSlides(){
+    return Array.from(document.querySelectorAll('#heroCarousel .hero-slide'));
   }
 
   function heroGetInterval(){
@@ -3648,27 +3662,59 @@
     return Math.max(1.5, secs) * 1000;
   }
 
+  // Automatic change: outgoing slide exits to the right, incoming slide enters from the left
+  function heroAdvance(){
+    const slides = heroSlides();
+    const total = slides.length;
+    if (total < 2) return;
+    const outEl = slides[heroIdx];
+    const nextIdx = (heroIdx + 1) % total;
+    const inEl = slides[nextIdx];
+
+    outEl.classList.remove('first-enter', 'active');
+    outEl.classList.add('slide-mode', 'exiting');
+
+    inEl.classList.remove('first-enter');
+    inEl.classList.add('slide-mode');
+    void inEl.offsetWidth; // force reflow so the parked position is applied before animating in
+    inEl.classList.add('active');
+
+    // Silently reset the outgoing slide back to its parked position once it's off-screen
+    setTimeout(function(){
+      outEl.classList.add('no-anim');
+      outEl.classList.remove('exiting');
+      void outEl.offsetWidth;
+      outEl.classList.remove('no-anim');
+    }, 1000);
+
+    heroIdx = nextIdx;
+  }
+
   function heroResetTimer(){
     clearInterval(heroTimer);
-    const total = document.querySelectorAll('#heroCarousel .hero-slide').length;
-    if (total < 2) return;
-    heroTimer = setInterval(function(){
-      heroIdx = (heroIdx + 1) % total;
-      heroUpdate();
-    }, heroGetInterval());
+    if (heroSlides().length < 2) return;
+    heroTimer = setInterval(heroAdvance, heroGetInterval());
   }
 
   window.heroCarouselRestart = function(){
     heroIdx = 0;
-    heroUpdate();
+    const slides = heroSlides();
+    if (!slides.length) return;
+    slides.forEach(function(el, i){
+      el.classList.remove('first-enter', 'slide-mode', 'active', 'exiting', 'no-anim');
+      el.classList.add(i === 0 ? 'first-enter' : 'slide-mode');
+    });
+    // Trigger the first slide's fade-in-from-above on the next paint
+    requestAnimationFrame(function(){
+      requestAnimationFrame(function(){
+        slides[0].classList.add('active');
+      });
+    });
     heroResetTimer();
   };
 
   document.addEventListener('DOMContentLoaded', function(){
-    if(document.getElementById('heroCarousel')){
-      heroUpdate();
-      heroResetTimer();
-    }
+    if (document.getElementById('heroCarousel')) window.heroCarouselRestart();
   });
 })();
 </script>

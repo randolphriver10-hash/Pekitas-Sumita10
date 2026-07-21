@@ -80,6 +80,11 @@
      ANNOUNCE STRIP
   ══════════════════════════════════════════════════════════════ */
   .announce {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 101;
+    height: var(--announce-h);
+    box-sizing: border-box;
     background: var(--ink);
     color: rgba(250,246,241,.76);
     padding: 10px 0;
@@ -115,7 +120,6 @@
     transition: background .45s var(--ease), box-shadow .45s var(--ease), top .45s var(--ease);
   }
   nav.scrolled {
-    top: 0;
     background: rgba(250,246,241,.97);
     box-shadow: 0 1px 0 var(--border-b), 0 4px 28px rgba(44,36,32,.07);
   }
@@ -230,11 +234,35 @@
   .hero-circle:nth-child(2) { width: 300px; height: 300px; bottom: 50px; left: -90px; border-color: rgba(196,180,164,.09); }
   .hero-circle:nth-child(3) { width: 740px; height: 740px; top: 50%; left: 50%; transform: translate(-50%,-50%); border-color: rgba(196,180,164,.06); }
 
-  .hero-content {
-    position: relative; z-index: 2;
-    text-align: center; padding: 0 32px; max-width: 780px;
-    margin-top: calc(var(--nav-h) / 2);
+  .hero-carousel {
+    position: absolute; inset: 0; z-index: 0; overflow: hidden;
+    background: linear-gradient(158deg, #F8EFE8 0%, #F2E8DA 36%, #EDE4D5 66%, #E8E0CF 100%);
   }
+  .hero-slide {
+    position: absolute; inset: 0;
+    opacity: 0; filter: blur(16px); transform: translateY(-32px);
+    transition: opacity 1.15s var(--ease), filter 1.15s var(--ease), transform 1.15s var(--ease);
+  }
+  .hero-slide.active { opacity: 1; filter: blur(0); transform: translateY(0); z-index: 1; }
+  .hero-slide img { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
+
+  .hero-scrim {
+    position: absolute; inset: 0; z-index: 2; pointer-events: none;
+    background: linear-gradient(180deg, rgba(20,16,14,0) 45%, rgba(20,16,14,.5) 100%);
+  }
+
+  .hero-content {
+    position: absolute; z-index: 3;
+    left: 50%; bottom: 104px; transform: translateX(-50%);
+    text-align: center; padding: 0 32px; width: 100%; max-width: 780px;
+  }
+
+  .hero .btn-secondary {
+    background: rgba(254,252,249,.92);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border-color: rgba(44,36,32,.16);
+  }
+  .hero .btn-secondary:hover { background: var(--text-dark); color: var(--cream); border-color: var(--text-dark); }
 
   .mayorista-hero-badge {
     display: inline-flex; align-items: center; gap: 9px;
@@ -1777,39 +1805,15 @@
 
 <!-- HERO -->
 <section class="hero">
-  <div class="hero-bg"></div>
-  <div class="hero-decoration">
-    <div class="hero-circle"></div>
-    <div class="hero-circle"></div>
-    <div class="hero-circle"></div>
-  </div>
-
-  <svg style="position:absolute;top:12%;left:8%;opacity:0.18;animation:floatA 6s ease-in-out infinite;" width="48" height="48" viewBox="0 0 48 48">
-    <path d="M24 4 L26.9 16.2 L39.4 12.6 L31.2 22.8 L40 32 L27.1 29.5 L24 42 L20.9 29.5 L8 32 L16.8 22.8 L8.6 12.6 L21.1 16.2Z" fill="#C4B4A4"/>
-  </svg>
-  <svg style="position:absolute;bottom:20%;right:10%;opacity:0.14;animation:floatB 7s ease-in-out infinite;" width="60" height="60" viewBox="0 0 60 60">
-    <circle cx="30" cy="30" r="28" fill="none" stroke="#C4B4A4" stroke-width="1.5"/>
-    <circle cx="30" cy="30" r="18" fill="none" stroke="#C4B4A4" stroke-width="1"/>
-  </svg>
-  <svg style="position:absolute;top:30%;right:15%;opacity:0.12;animation:floatC 8s ease-in-out infinite;" width="36" height="36" viewBox="0 0 36 36">
-    <rect x="4" y="4" width="28" height="28" rx="6" fill="none" stroke="#C4B4A4" stroke-width="1.5"/>
-  </svg>
+  <div class="hero-carousel" id="heroCarousel"></div>
+  <div class="hero-scrim"></div>
 
   <div class="hero-content">
-    <div class="mayorista-hero-badge">
-      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-      <span>Venta exclusiva mayorista</span>
-    </div>
-    <p class="hero-eyebrow">Colección Primavera — Verano 2025</p>
-    <h1 class="hero-title">Pequeñas<br><em>con estilo</em><br>propio</h1>
-    <p class="hero-subtitle">Moda infantil pensada con amor, calidad y ternura</p>
     <div class="hero-cta">
       <a href="#nueva" class="btn-primary">Explorar colección</a>
       <a href="#categorias" class="btn-secondary">Ver categorías</a>
     </div>
   </div>
-
-  <img src="/assets/images/logo.PNG" class="hero-mascot" data-brand="logo" alt="Pekitas mascota" loading="lazy">
 
   <div class="hero-scroll-hint">
     <span>Scroll</span>
@@ -3042,6 +3046,20 @@
       if (twDesc) twDesc.setAttribute('content', s.metaDesc);
     }
 
+    // Hero carousel
+    if (s.heroBanners && Array.isArray(s.heroBanners)) {
+      const heroImgs = s.heroBanners.filter(Boolean);
+      if (heroImgs.length) {
+        const heroCarousel = document.getElementById('heroCarousel');
+        if (heroCarousel) {
+          heroCarousel.innerHTML = heroImgs.map((url, i) =>
+            '<div class="hero-slide' + (i===0?' active':'') + '"><img src="' + url + '" alt="" loading="eager"></div>'
+          ).join('');
+        }
+      }
+    }
+    if (typeof window.heroCarouselRestart === 'function') window.heroCarouselRestart();
+
     // Announcement bar
     if (s.announceTexts && s.announceTexts.length) {
       const track = document.querySelector('.announce-track');
@@ -3608,6 +3626,48 @@
     if(document.getElementById('ncCarousel')){
       ncUpdate();
       ncResetTimer();
+    }
+  });
+})();
+</script>
+
+<script>
+// ── Hero Carousel ──────────────────────────────────────────
+(function(){
+  let heroIdx = 0;
+  let heroTimer = null;
+
+  function heroUpdate(){
+    const slides = document.querySelectorAll('#heroCarousel .hero-slide');
+    slides.forEach((s,i)=> s.classList.toggle('active', i===heroIdx));
+  }
+
+  function heroGetInterval(){
+    const s = window.PEKITAS_SETTINGS || {};
+    const secs = parseFloat(s.heroCarouselSpeed) || 2.2;
+    return Math.max(1.5, secs) * 1000;
+  }
+
+  function heroResetTimer(){
+    clearInterval(heroTimer);
+    const total = document.querySelectorAll('#heroCarousel .hero-slide').length;
+    if (total < 2) return;
+    heroTimer = setInterval(function(){
+      heroIdx = (heroIdx + 1) % total;
+      heroUpdate();
+    }, heroGetInterval());
+  }
+
+  window.heroCarouselRestart = function(){
+    heroIdx = 0;
+    heroUpdate();
+    heroResetTimer();
+  };
+
+  document.addEventListener('DOMContentLoaded', function(){
+    if(document.getElementById('heroCarousel')){
+      heroUpdate();
+      heroResetTimer();
     }
   });
 })();

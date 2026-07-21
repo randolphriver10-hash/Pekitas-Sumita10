@@ -3817,6 +3817,7 @@
   let heroPaused = false;
   let heroDragging = false;
   let heroTransitioning = false;
+  let heroFirstAutoTickDone = false;
   function heroGetInterval(){
     const s = window.PEKITAS_SETTINGS || {};
     const secs = parseFloat(s.heroCarouselSpeed);
@@ -3957,6 +3958,11 @@
   function heroAutoTick(){
     if (heroPaused || heroDragging || document.hidden) return;
     if (heroTotal() < 2) return;
+    if (!heroFirstAutoTickDone) {
+      heroFirstAutoTickDone = true;
+      heroSlideTo(heroIdx + 1); // primera transición automática: desliza como el swipe manual
+      return;
+    }
     heroCrossfadeTo(heroIdx + 1);
   }
   function heroStartAutoplay(){

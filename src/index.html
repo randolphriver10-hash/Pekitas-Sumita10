@@ -249,14 +249,14 @@
   }
   .hero-slide.first-enter.active { opacity: 1; filter: blur(0); transform: translateY(0); z-index: 2; }
 
-  /* Automatic rotation after the first slide: smooth slide-to-the-right */
+  /* Rotation after the first slide: bidirectional slide, direction depends on target banner */
   .hero-slide.slide-mode {
     opacity: 1;
-    transform: translateX(-100%);
     transition: transform 1.5s var(--ease);
   }
-  .hero-slide.slide-mode.active { transform: translateX(0); z-index: 2; }
-  .hero-slide.slide-mode.exiting { transform: translateX(100%); z-index: 1; }
+  .hero-slide.slide-mode.pos-left  { transform: translateX(-100%); z-index: 1; }
+  .hero-slide.slide-mode.pos-right { transform: translateX(100%); z-index: 1; }
+  .hero-slide.slide-mode.pos-center { transform: translateX(0); z-index: 2; }
   .hero-slide.no-anim { transition: none !important; }
 
   .hero-scrim {
@@ -266,7 +266,7 @@
 
   .hero-content {
     position: absolute; z-index: 3;
-    left: 50%; bottom: 104px; transform: translateX(-50%);
+    left: 50%; bottom: 48px; transform: translateX(-50%);
     text-align: center; padding: 0 32px; width: 100%; max-width: 780px;
   }
 
@@ -3064,10 +3064,18 @@
     if (s.heroBanners && Array.isArray(s.heroBanners)) {
       const heroImgs = s.heroBanners.filter(Boolean);
       if (heroImgs.length) {
+        // Precargar todos los banners con alta prioridad para que no haya espera al cambiar de slide
+        heroImgs.forEach(function(url){
+          if (!document.querySelector('link[rel="preload"][href="' + url + '"]')) {
+            const link = document.createElement('link');
+            link.rel = 'preload'; link.as = 'image'; link.href = url;
+            document.head.appendChild(link);
+          }
+        });
         const heroCarousel = document.getElementById('heroCarousel');
         if (heroCarousel) {
           heroCarousel.innerHTML = heroImgs.map((url) =>
-            '<div class="hero-slide"><img src="' + url + '" alt="" loading="eager"></div>'
+            '<div class="hero-slide"><img src="' + url + '" alt="" loading="eager" fetchpriority="high"></div>'
           ).join('');
         }
       }
@@ -3371,6 +3379,9 @@
   @media (max-width: 579px) {
     .hero { height: auto; min-height: 0; aspect-ratio: 2 / 3; padding: 0; }
   }
+
+  /* ── Hero: los botones/puntitos bajaron, ya no entra el hint de scroll ── */
+  .hero-scroll-hint { display: none; }
 
   /* ── Hero: puntitos indicadores / navegación manual ── */
   .hero-dots {
@@ -3703,29 +3714,34 @@
     dotsEl.innerHTML = html;
   }
 
-  // Outgoing slide exits to the right, incoming slide enters from the left
+  // Dirección según el banner de destino: a un índice mayor = desliza a la izquierda,
+  // a un índice menor = desliza a la derecha (con 2 banners: 1º solo va a la izquierda, 2º solo a la derecha)
   function heroTransitionTo(targetIdx){
     const slides = heroSlides();
     const total = slides.length;
-    if (total < 2 || targetIdx === heroIdx) return;
+    if (total < 2 || targetIdx === heroIdx || targetIdx < 0 || targetIdx >= total) return;
     const outEl = slides[heroIdx];
     const inEl = slides[targetIdx];
+    const dirLeft = targetIdx > heroIdx;
 
-    outEl.classList.remove('first-enter', 'active');
-    outEl.classList.add('slide-mode', 'exiting');
-
+    outEl.classList.remove('first-enter');
     inEl.classList.remove('first-enter');
+    outEl.classList.add('slide-mode');
     inEl.classList.add('slide-mode');
-    void inEl.offsetWidth; // force reflow so the parked position is applied before animating in
-    inEl.classList.add('active');
 
-    // Silently reset the outgoing slide back to its parked position once it's off-screen
-    setTimeout(function(){
-      outEl.classList.add('no-anim');
-      outEl.classList.remove('exiting');
-      void outEl.offsetWidth;
-      outEl.classList.remove('no-anim');
-    }, 1600);
+    // Park the incoming slide on the correct side instantly, before animating it in
+    inEl.classList.add('no-anim');
+    inEl.classList.remove('pos-left', 'pos-right', 'pos-center');
+    inEl.classList.add(dirLeft ? 'pos-right' : 'pos-left');
+    void inEl.offsetWidth;
+    inEl.classList.remove('no-anim');
+
+    outEl.classList.remove('pos-left', 'pos-right', 'pos-center');
+    outEl.classList.add(dirLeft ? 'pos-left' : 'pos-right');
+
+    void inEl.offsetWidth;
+    inEl.classList.remove('pos-left', 'pos-right');
+    inEl.classList.add('pos-center');
 
     heroIdx = targetIdx;
     heroUpdateDots();
@@ -3762,8 +3778,9 @@
     const slides = heroSlides();
     if (!slides.length) return;
     slides.forEach(function(el, i){
-      el.classList.remove('first-enter', 'slide-mode', 'active', 'exiting', 'no-anim');
-      el.classList.add(i === 0 ? 'first-enter' : 'slide-mode');
+      el.classList.remove('first-enter', 'slide-mode', 'active', 'no-anim', 'pos-left', 'pos-right', 'pos-center');
+      if (i === 0) el.classList.add('first-enter');
+      else el.classList.add('slide-mode', 'pos-right');
     });
     heroRenderDots();
     heroInitSwipe();
@@ -3798,10 +3815,10 @@
       const diffX = touch.clientX - startX;
       const diffY = touch.clientY - startY;
       if (Math.abs(diffX) < 40 || Math.abs(diffX) < Math.abs(diffY)) return;
-      const total = heroSlides().length;
-      if (total < 2) return;
-      const dir = diffX < 0 ? 1 : -1; // swipe left = next, swipe right = previous
-      window.heroGoTo((heroIdx + dir + total) % total);
+      // Swipe left -> banner siguiente (desliza a la izquierda); swipe right -> banner anterior (desliza a la derecha).
+      // No da la vuelta: en el último banner un swipe a la izquierda no hace nada, y viceversa en el primero.
+      const targetIdx = diffX < 0 ? heroIdx + 1 : heroIdx - 1;
+      window.heroGoTo(targetIdx);
     }, { passive: true });
   }
 

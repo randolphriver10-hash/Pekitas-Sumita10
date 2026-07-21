@@ -239,25 +239,52 @@
   .hero-slide {
     position: absolute; inset: 0;
     opacity: 0;
+    transform: translate3d(0,0,0);
+    will-change: transform, opacity;
+    backface-visibility: hidden;
   }
   .hero-slide img { width: 100%; height: 100%; object-fit: contain; object-position: center; display: block; }
 
-  /* First appearance: fade + un-blur, dropping in from above */
-  .hero-slide.first-enter {
-    filter: blur(16px); transform: translateY(-32px);
-    transition: opacity 2s var(--ease), filter 2s var(--ease), transform 2s var(--ease);
-  }
-  .hero-slide.first-enter.active { opacity: 1; filter: blur(0); transform: translateY(0); z-index: 2; }
+  /* Posiciones espaciales (usadas por el sistema de slide manual: drag/flechas/puntitos) */
+  .hero-slide.pos-left   { transform: translate3d(-100%,0,0); }
+  .hero-slide.pos-right  { transform: translate3d(100%,0,0); }
+  .hero-slide.pos-center { transform: translate3d(0,0,0); }
+  .hero-slide.is-visible { opacity: 1; }
+  .hero-slide.z-top    { z-index: 2; }
+  .hero-slide.z-bottom { z-index: 1; }
 
-  /* Rotation after the first slide: bidirectional slide, direction depends on target banner */
-  .hero-slide.slide-mode {
-    opacity: 1;
-    transition: transform 1.5s var(--ease);
+  /* Autoplay: crossfade puro por opacidad, sin desplazamiento */
+  .hero-slide.anim-fade { transition: opacity .82s cubic-bezier(0.22, 1, 0.36, 1); }
+
+  /* Manual (drag/swipe/flechas/puntitos): desplazamiento horizontal por transform */
+  .hero-slide.anim-slide { transition: transform .72s cubic-bezier(0.22, 1, 0.36, 1); }
+
+  /* Entrada inicial del primer banner al cargar la página: muy sutil */
+  .hero-slide.anim-entrance {
+    transition: opacity .7s cubic-bezier(0.22, 1, 0.36, 1), transform .7s cubic-bezier(0.22, 1, 0.36, 1);
   }
-  .hero-slide.slide-mode.pos-left  { transform: translateX(-100%); z-index: 1; }
-  .hero-slide.slide-mode.pos-right { transform: translateX(100%); z-index: 1; }
-  .hero-slide.slide-mode.pos-center { transform: translateX(0); z-index: 2; }
+  .hero-slide.entrance-start { opacity: 0; transform: translate3d(0,10px,0); }
+
   .hero-slide.no-anim { transition: none !important; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero-slide { transition: none !important; }
+  }
+
+  .hero-arrow {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    z-index: 4; width: 44px; height: 44px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(254,252,249,.82); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    border: none; cursor: pointer; color: var(--text-dark);
+    transition: background .25s var(--ease), transform .25s var(--ease), opacity .25s var(--ease);
+    opacity: .88;
+  }
+  .hero-arrow:hover { background: var(--text-dark); color: var(--cream); opacity: 1; }
+  .hero-arrow:active { transform: translateY(-50%) scale(.94); }
+  .hero-arrow-prev { left: 12px; }
+  .hero-arrow-next { right: 12px; }
+  .hero-arrow[disabled] { opacity: 0; pointer-events: none; }
 
   .hero-scrim {
     position: absolute; inset: 0; z-index: 2; pointer-events: none;
@@ -266,7 +293,7 @@
 
   .hero-content {
     position: absolute; z-index: 3;
-    left: 50%; bottom: 48px; transform: translateX(-50%);
+    left: 50%; bottom: clamp(20px, 6%, 44px); transform: translateX(-50%);
     text-align: center; padding: 0 32px; width: 100%; max-width: 780px;
   }
 
@@ -310,8 +337,24 @@
   }
 
   .hero-cta {
-    display: inline-flex; gap: 14px; flex-wrap: wrap; justify-content: center;
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
     opacity: 0; animation: riseUp 1s var(--ease) .80s forwards;
+  }
+  .hero-cta .btn-primary,
+  .hero-cta .btn-secondary {
+    width: 70%; max-width: 320px; min-height: 50px;
+    padding: 0 20px; font-size: 10.5px;
+    justify-content: center; box-sizing: border-box;
+  }
+  .hero-cta .btn-secondary { width: 62%; }
+
+  @media (min-width: 640px) {
+    .hero-cta { flex-direction: row; gap: 12px; }
+    .hero-cta .btn-primary,
+    .hero-cta .btn-secondary {
+      width: auto; max-width: none; min-height: 46px;
+      padding: 0 30px; font-size: 11px;
+    }
   }
 
   .hero-scroll-hint {
@@ -1376,7 +1419,6 @@
   .hero { padding: 72px 20px 48px; min-height: 70dvh; }
   .hero-title { font-size: clamp(2.2rem, 10vw, 3.5rem); line-height: 1.15; }
   .hero-subtitle { font-size: 1rem; max-width: 100%; }
-  .hero-cta { padding: 14px 32px; font-size: 0.95rem; min-height: 48px; }
 
   /* Sections */
   section { padding: 52px 18px; }
@@ -1820,6 +1862,13 @@
 <section class="hero">
   <div class="hero-carousel" id="heroCarousel"></div>
   <div class="hero-scrim"></div>
+
+  <button type="button" class="hero-arrow hero-arrow-prev" id="heroArrowPrev" onclick="heroPrev()" aria-label="Banner anterior">
+    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+  </button>
+  <button type="button" class="hero-arrow hero-arrow-next" id="heroArrowNext" onclick="heroNext()" aria-label="Banner siguiente">
+    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+  </button>
 
   <div class="hero-content">
     <div class="hero-cta">
@@ -3060,24 +3109,25 @@
       if (twDesc) twDesc.setAttribute('content', s.metaDesc);
     }
 
-    // Hero carousel
+    // Hero carousel — los banners salen únicamente de settings.heroBanners (panel admin)
     if (s.heroBanners && Array.isArray(s.heroBanners)) {
       const heroImgs = s.heroBanners.filter(Boolean);
-      if (heroImgs.length) {
-        // Precargar todos los banners con alta prioridad para que no haya espera al cambiar de slide
-        heroImgs.forEach(function(url){
+      const heroCarousel = document.getElementById('heroCarousel');
+      if (heroCarousel) {
+        heroCarousel.innerHTML = heroImgs.map(function(url, i){
+          const priority = i === 0 || i === 1; // solo el actual y el siguiente
+          return '<div class="hero-slide"><img src="' + url + '" alt=""' +
+            (priority ? ' loading="eager" fetchpriority="' + (i === 0 ? 'high' : 'auto') + '"' : ' loading="lazy"') +
+            '></div>';
+        }).join('');
+        // Precarga real solo del banner actual + el siguiente
+        heroImgs.slice(0, 2).forEach(function(url){
           if (!document.querySelector('link[rel="preload"][href="' + url + '"]')) {
             const link = document.createElement('link');
             link.rel = 'preload'; link.as = 'image'; link.href = url;
             document.head.appendChild(link);
           }
         });
-        const heroCarousel = document.getElementById('heroCarousel');
-        if (heroCarousel) {
-          heroCarousel.innerHTML = heroImgs.map((url) =>
-            '<div class="hero-slide"><img src="' + url + '" alt="" loading="eager" fetchpriority="high"></div>'
-          ).join('');
-        }
       }
     }
     if (typeof window.heroCarouselRestart === 'function') window.heroCarouselRestart();
@@ -3385,11 +3435,11 @@
 
   /* ── Hero: puntitos indicadores / navegación manual ── */
   .hero-dots {
-    display: flex; gap: 10px; align-items: center; justify-content: center;
-    margin-top: 22px;
+    display: flex; gap: 6px; align-items: center; justify-content: center;
+    margin-top: 14px;
   }
   .hero-dot {
-    width: 34px; height: 34px; padding: 0;
+    width: 44px; height: 44px; padding: 0;
     display: flex; align-items: center; justify-content: center;
     background: transparent; border: none; cursor: pointer;
   }
@@ -3678,58 +3728,116 @@
 </script>
 
 <script>
-// ── Hero Carousel ──────────────────────────────────────────
+// ── Hero Carousel ────────────────────────────────────────────────────────
+// Autoplay = crossfade por opacidad. Manual (drag/flechas/puntitos) = slide por transform.
+// Los banners salen siempre de settings.heroBanners (panel admin), nunca hardcodeados acá.
 (function(){
   let heroIdx = 0;
   let heroTimer = null;
-  let heroAutoCount = 0;
-  const HERO_AUTO_LIMIT = 2; // solo se desliza automático 2 veces, después es manual (puntitos)
-
-  function heroSlides(){
-    return Array.from(document.querySelectorAll('#heroCarousel .hero-slide'));
-  }
-
+  let heroPaused = false;
+  let heroDragging = false;
+  let heroTransitioning = false;
   function heroGetInterval(){
     const s = window.PEKITAS_SETTINGS || {};
-    const secs = parseFloat(s.heroCarouselSpeed) || 2.2;
-    return Math.max(1.5, secs) * 1000;
+    const secs = parseFloat(s.heroCarouselSpeed);
+    return (secs && secs >= 3) ? secs * 1000 : 5500; // default 5.5s (rango pedido: 5-6s)
+  }
+  const heroReduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+  function heroSlides(){ return Array.from(document.querySelectorAll('#heroCarousel .hero-slide')); }
+  function heroTotal(){ return heroSlides().length; }
+  function heroSlideAt(i){
+    const total = heroTotal();
+    if (total < 1) return null;
+    return heroSlides()[((i % total) + total) % total];
   }
 
-  function heroUpdateDots(){
+  function heroUpdateControls(){
     document.querySelectorAll('#heroDots .hero-dot').forEach(function(d, i){
       d.classList.toggle('active', i === heroIdx);
     });
   }
 
-  function heroRenderDots(){
+  function heroRenderControls(){
     const dotsEl = document.getElementById('heroDots');
-    if (!dotsEl) return;
-    const total = heroSlides().length;
-    if (total < 2) { dotsEl.innerHTML = ''; return; }
-    let html = '';
-    for (let i = 0; i < total; i++) {
-      html += '<button type="button" class="hero-dot' + (i === heroIdx ? ' active' : '') +
-        '" onclick="heroGoTo(' + i + ')" aria-label="Ver banner ' + (i + 1) + '"></button>';
+    const prevBtn = document.getElementById('heroArrowPrev');
+    const nextBtn = document.getElementById('heroArrowNext');
+    const total = heroTotal();
+    const show = total > 1;
+    if (dotsEl) {
+      let html = '';
+      if (show) {
+        for (let i = 0; i < total; i++) {
+          html += '<button type="button" class="hero-dot' + (i === heroIdx ? ' active' : '') +
+            '" onclick="heroGoTo(' + i + ')" aria-label="Ver banner ' + (i + 1) + '"></button>';
+        }
+      }
+      dotsEl.innerHTML = html;
     }
-    dotsEl.innerHTML = html;
+    if (prevBtn) prevBtn.style.display = show ? '' : 'none';
+    if (nextBtn) nextBtn.style.display = show ? '' : 'none';
   }
 
-  // Dirección según el banner de destino: a un índice mayor = desliza a la izquierda,
-  // a un índice menor = desliza a la derecha (con 2 banners: 1º solo va a la izquierda, 2º solo a la derecha)
-  function heroTransitionTo(targetIdx){
+  function heroLoadingHints(){
     const slides = heroSlides();
     const total = slides.length;
-    if (total < 2 || targetIdx === heroIdx || targetIdx < 0 || targetIdx >= total) return;
+    slides.forEach(function(el, i){
+      const img = el.querySelector('img');
+      if (!img) return;
+      const priority = i === heroIdx || i === (heroIdx + 1) % total || i === (heroIdx - 1 + total) % total;
+      if (priority && img.loading !== 'eager') img.loading = 'eager';
+    });
+  }
+
+  // ── CROSSFADE (solo autoplay) — opacidad únicamente, sin desplazamiento ──
+  function heroCrossfadeTo(targetIdx){
+    const slides = heroSlides();
+    const total = slides.length;
+    if (total < 2 || heroTransitioning) return;
+    targetIdx = ((targetIdx % total) + total) % total;
+    if (targetIdx === heroIdx) return;
     const outEl = slides[heroIdx];
     const inEl = slides[targetIdx];
-    const dirLeft = targetIdx > heroIdx;
+    heroTransitioning = true;
 
-    outEl.classList.remove('first-enter');
-    inEl.classList.remove('first-enter');
-    outEl.classList.add('slide-mode');
-    inEl.classList.add('slide-mode');
+    [outEl, inEl].forEach(function(el){
+      el.classList.remove('pos-left', 'pos-right', 'no-anim', 'anim-slide');
+      el.classList.add('pos-center', 'anim-fade');
+    });
+    inEl.classList.add('z-top');
+    outEl.classList.add('z-bottom');
+    void inEl.offsetWidth;
+    inEl.classList.add('is-visible');
+    outEl.classList.remove('is-visible');
 
-    // Park the incoming slide on the correct side instantly, before animating it in
+    heroIdx = targetIdx;
+    heroUpdateControls();
+    heroLoadingHints();
+
+    setTimeout(function(){
+      outEl.classList.remove('anim-fade', 'z-bottom');
+      inEl.classList.remove('z-top');
+      heroTransitioning = false;
+    }, heroReduceMotion ? 0 : 850);
+  }
+
+  // ── SLIDE (manual: flechas / puntitos / confirmación de drag) — solo transform ──
+  function heroSlideTo(targetIdx){
+    const slides = heroSlides();
+    const total = slides.length;
+    if (total < 2 || heroTransitioning) return;
+    targetIdx = ((targetIdx % total) + total) % total;
+    if (targetIdx === heroIdx) return;
+    const outEl = slides[heroIdx];
+    const inEl = slides[targetIdx];
+    const dirLeft = targetIdx > heroIdx; // banner de índice mayor => desliza a la izquierda
+    heroTransitioning = true;
+
+    outEl.classList.remove('anim-fade');
+    inEl.classList.remove('anim-fade');
+    outEl.classList.add('anim-slide', 'is-visible', 'z-bottom');
+    inEl.classList.add('anim-slide', 'is-visible', 'z-top');
+
     inEl.classList.add('no-anim');
     inEl.classList.remove('pos-left', 'pos-right', 'pos-center');
     inEl.classList.add(dirLeft ? 'pos-right' : 'pos-left');
@@ -3744,83 +3852,203 @@
     inEl.classList.add('pos-center');
 
     heroIdx = targetIdx;
-    heroUpdateDots();
+    heroUpdateControls();
+    heroLoadingHints();
+
+    setTimeout(function(){
+      outEl.classList.remove('anim-slide', 'is-visible', 'z-bottom');
+      inEl.classList.remove('z-top');
+      heroTransitioning = false;
+    }, heroReduceMotion ? 0 : 740);
   }
 
-  function heroAdvance(){
-    const total = heroSlides().length;
-    if (total < 2) return;
-    heroTransitionTo((heroIdx + 1) % total);
-    heroAutoCount++;
-    if (heroAutoCount >= HERO_AUTO_LIMIT) {
-      clearInterval(heroTimer);
-      heroTimer = null;
-    }
+  window.heroNext = function(){ heroManualGoTo(heroIdx + 1); };
+  window.heroPrev = function(){ heroManualGoTo(heroIdx - 1); };
+  window.heroGoTo = function(i){ heroManualGoTo(i); };
+
+  function heroManualGoTo(i){
+    if (heroTotal() < 2) return;
+    heroPauseAutoplay();
+    heroSlideTo(i);
+    heroResumeAutoplay();
   }
 
-  // Navegación manual (puntitos)
-  window.heroGoTo = function(i){
+  // ── AUTOPLAY ──────────────────────────────────────────────────────────
+  function heroAutoTick(){
+    if (heroPaused || heroDragging || document.hidden) return;
+    if (heroTotal() < 2) return;
+    heroCrossfadeTo(heroIdx + 1);
+  }
+  function heroStartAutoplay(){
     clearInterval(heroTimer);
     heroTimer = null;
-    heroTransitionTo(i);
-  };
-
-  function heroResetTimer(){
-    clearInterval(heroTimer);
-    heroTimer = null;
-    heroAutoCount = 0;
-    if (heroSlides().length < 2) return;
-    heroTimer = setInterval(heroAdvance, heroGetInterval());
+    if (heroTotal() < 2) return;
+    heroTimer = setInterval(heroAutoTick, heroGetInterval());
   }
+  function heroPauseAutoplay(){ heroPaused = true; }
+  function heroResumeAutoplay(){ heroPaused = false; heroStartAutoplay(); }
 
-  window.heroCarouselRestart = function(){
-    heroIdx = 0;
-    const slides = heroSlides();
-    if (!slides.length) return;
-    slides.forEach(function(el, i){
-      el.classList.remove('first-enter', 'slide-mode', 'active', 'no-anim', 'pos-left', 'pos-right', 'pos-center');
-      if (i === 0) el.classList.add('first-enter');
-      else el.classList.add('slide-mode', 'pos-right');
-    });
-    heroRenderDots();
-    heroInitSwipe();
-    // Trigger the first slide's fade-in-from-above on the next paint
+  // ── Entrada inicial: solo la primera vez que se pinta el primer banner ──
+  function heroPlayEntrance(slide){
+    if (!slide) return;
+    if (heroReduceMotion) { slide.classList.add('pos-center', 'is-visible', 'z-top'); return; }
+    slide.classList.add('anim-entrance', 'entrance-start');
+    void slide.offsetWidth;
     requestAnimationFrame(function(){
       requestAnimationFrame(function(){
-        slides[0].classList.add('active');
+        slide.classList.remove('entrance-start');
+        slide.classList.add('is-visible');
       });
     });
-    heroResetTimer();
+    setTimeout(function(){ slide.classList.remove('anim-entrance'); }, 750);
+  }
+
+  // ── (Re)inicialización — se llama cada vez que cambian los banners desde el admin ──
+  window.heroCarouselRestart = function(){
+    clearInterval(heroTimer);
+    heroTimer = null;
+    heroTransitioning = false;
+    heroDragging = false;
+    heroPaused = false;
+    const slides = heroSlides();
+    const firstLoad = !window._heroEverRendered;
+    heroIdx = 0;
+
+    slides.forEach(function(el, i){
+      el.className = 'hero-slide';
+      el.style.transform = ''; el.style.opacity = ''; el.style.zIndex = '';
+      if (i === 0) el.classList.add('pos-center', 'z-top');
+      else el.classList.add('pos-right');
+    });
+
+    heroRenderControls();
+    heroInitInteractions();
+
+    if (!slides.length) return; // sin banners activos: solo queda el fondo decorativo
+
+    if (firstLoad) {
+      window._heroEverRendered = true;
+      heroPlayEntrance(slides[0]);
+    } else {
+      slides[0].classList.add('pos-center', 'is-visible');
+    }
+    heroStartAutoplay();
   };
 
-  // Swipe táctil: deslizar el dedo para cambiar de banner manualmente
-  function heroInitSwipe(){
+  // ── Interacción: swipe/drag táctil + mouse, con seguimiento 1:1 del gesto ──
+  function heroInitInteractions(){
     const el = document.getElementById('heroCarousel');
-    if (!el || el._swipeInit) return;
-    el._swipeInit = true;
-    let startX = 0, startY = 0, moved = false;
-    el.addEventListener('touchstart', function(e){
-      if (e.touches.length === 1) {
-        startX = e.touches[0].clientX;
-        startY = e.touches[0].clientY;
-        moved = false;
+    if (!el || el._interactionsInit) return;
+    el._interactionsInit = true;
+
+    let startX = 0, startY = 0, deltaX = 0, axis = null, isDown = false;
+
+    // Nota: con exactamente 2 banners, "anterior" y "siguiente" son el MISMO elemento
+    // (el único otro slide que existe). Por eso prev/next se preparan recién en move(),
+    // según la dirección real del gesto, en vez de posicionar ambos por adelantado.
+    function begin(x, y){
+      if (heroTotal() < 2 || heroTransitioning) return;
+      isDown = true; heroDragging = true; axis = null; deltaX = 0;
+      startX = x; startY = y;
+      heroPauseAutoplay();
+      const active = heroSlideAt(heroIdx);
+      if (active) { active.classList.add('no-anim'); active.style.transform = 'translate3d(0,0,0)'; }
+    }
+
+    function move(x, y){
+      if (!isDown) return false;
+      const dx = x - startX, dy = y - startY;
+      if (axis === null) {
+        if (Math.abs(dx) > 6 || Math.abs(dy) > 6) axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
       }
-    }, { passive: true });
+      if (axis !== 'x') return false;
+      deltaX = dx;
+      const active = heroSlideAt(heroIdx);
+      if (active) active.style.transform = 'translate3d(' + dx + 'px,0,0)';
+      if (dx < 0) {
+        const next = heroSlideAt(heroIdx + 1);
+        if (next) {
+          next.classList.add('no-anim', 'is-visible');
+          next.style.transform = 'translate3d(calc(100% + ' + dx + 'px),0,0)';
+        }
+      } else if (dx > 0) {
+        const prev = heroSlideAt(heroIdx - 1);
+        if (prev) {
+          prev.classList.add('no-anim', 'is-visible');
+          prev.style.transform = 'translate3d(calc(-100% + ' + dx + 'px),0,0)';
+        }
+      }
+      return true;
+    }
+
+    function cleanupInline(elms){
+      elms.forEach(function(elm){ if (elm) { elm.style.transform = ''; elm.classList.remove('no-anim'); } });
+    }
+
+    function end(){
+      if (!isDown) return;
+      isDown = false; heroDragging = false;
+      const wasX = axis === 'x';
+      axis = null;
+      const active = heroSlideAt(heroIdx), prev = heroSlideAt(heroIdx - 1), next = heroSlideAt(heroIdx + 1);
+
+      if (!wasX) {
+        cleanupInline([active, prev, next]);
+        if (prev) prev.classList.remove('is-visible');
+        if (next) next.classList.remove('is-visible');
+        heroResumeAutoplay();
+        deltaX = 0;
+        return;
+      }
+
+      const w = el.clientWidth || 1;
+      const threshold = w * 0.18;
+      cleanupInline([active, prev, next]);
+
+      if (deltaX <= -threshold && next) {
+        if (prev) prev.classList.remove('is-visible');
+        heroSlideTo(heroIdx + 1);
+      } else if (deltaX >= threshold && prev) {
+        if (next) next.classList.remove('is-visible');
+        heroSlideTo(heroIdx - 1);
+      } else {
+        // No llegó al umbral: vuelve suavemente a su lugar.
+        // Solo se toca el elemento que realmente se reveló (según el signo de deltaX),
+        // para no pisarlo dos veces cuando prev y next son el mismo slide (2 banners).
+        const revealed = deltaX < 0 ? next : (deltaX > 0 ? prev : null);
+        if (active) { active.classList.add('anim-slide'); active.style.transform = 'translate3d(0,0,0)'; }
+        if (revealed) {
+          revealed.classList.add('anim-slide');
+          revealed.style.transform = deltaX < 0 ? 'translate3d(100%,0,0)' : 'translate3d(-100%,0,0)';
+        }
+        setTimeout(function(){
+          [active, revealed].forEach(function(elm){ if (elm) { elm.classList.remove('anim-slide'); elm.style.transform = ''; } });
+          if (revealed) revealed.classList.remove('is-visible');
+        }, heroReduceMotion ? 0 : 740);
+      }
+      deltaX = 0;
+      heroResumeAutoplay();
+    }
+
+    el.addEventListener('touchstart', function(e){ if (e.touches.length === 1) begin(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
     el.addEventListener('touchmove', function(e){
-      if (Math.abs(e.touches[0].clientX - startX) > 12) moved = true;
-    }, { passive: true });
-    el.addEventListener('touchend', function(e){
-      if (!moved) return;
-      const touch = e.changedTouches[0];
-      const diffX = touch.clientX - startX;
-      const diffY = touch.clientY - startY;
-      if (Math.abs(diffX) < 40 || Math.abs(diffX) < Math.abs(diffY)) return;
-      // Swipe left -> banner siguiente (desliza a la izquierda); swipe right -> banner anterior (desliza a la derecha).
-      // No da la vuelta: en el último banner un swipe a la izquierda no hace nada, y viceversa en el primero.
-      const targetIdx = diffX < 0 ? heroIdx + 1 : heroIdx - 1;
-      window.heroGoTo(targetIdx);
-    }, { passive: true });
+      if (e.touches.length !== 1) return;
+      if (move(e.touches[0].clientX, e.touches[0].clientY)) e.preventDefault();
+    }, { passive: false });
+    el.addEventListener('touchend', end, { passive: true });
+    el.addEventListener('touchcancel', end, { passive: true });
+
+    el.addEventListener('mousedown', function(e){ begin(e.clientX, e.clientY); e.preventDefault(); });
+    window.addEventListener('mousemove', function(e){ if (isDown) move(e.clientX, e.clientY); });
+    window.addEventListener('mouseup', function(){ if (isDown) end(); });
+
+    el.addEventListener('mouseenter', heroPauseAutoplay);
+    el.addEventListener('mouseleave', function(){ if (!isDown) heroResumeAutoplay(); });
   }
+
+  document.addEventListener('visibilitychange', function(){
+    if (!document.hidden) heroResumeAutoplay();
+  });
 
   document.addEventListener('DOMContentLoaded', function(){
     if (document.getElementById('heroCarousel')) window.heroCarouselRestart();

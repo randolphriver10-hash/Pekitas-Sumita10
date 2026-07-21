@@ -206,7 +206,7 @@
   ══════════════════════════════════════════════════════════════ */
   .hero {
     position: relative;
-    height: 100vh; min-height: 650px;
+    height: 125vh; min-height: 780px;
     display: flex; align-items: center; justify-content: center;
     overflow: hidden;
   }
@@ -3479,9 +3479,9 @@
     background:#fff; width:22px; border-radius:4px;
   }
 
-  /* ── Hero: sin barras en mobile — el hero toma el mismo ratio que las imágenes ── */
+  /* ── Hero: más presencia visual en mobile (~100dvh), manteniendo el cartel completo (object-fit:contain) ── */
   @media (max-width: 579px) {
-    .hero { height: auto; min-height: 0; aspect-ratio: 2 / 3; padding: 0; }
+    .hero { height: 100dvh; min-height: 0; aspect-ratio: auto; padding: 0; }
   }
 
   /* ── Hero: los botones/puntitos bajaron, ya no entra el hint de scroll ── */

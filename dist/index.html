@@ -261,7 +261,7 @@
 
   /* Entrada inicial del primer banner al cargar la página: muy sutil */
   .hero-slide.anim-entrance {
-    transition: opacity .7s cubic-bezier(0.22, 1, 0.36, 1), transform .7s cubic-bezier(0.22, 1, 0.36, 1);
+    transition: opacity 1.8s cubic-bezier(0.22, 1, 0.36, 1), transform 1.8s cubic-bezier(0.22, 1, 0.36, 1);
   }
   .hero-slide.entrance-start { opacity: 0; transform: translate3d(0,10px,0); }
 
@@ -3980,7 +3980,7 @@
         slide.classList.add('is-visible');
       });
     });
-    setTimeout(function(){ slide.classList.remove('anim-entrance'); }, 750);
+    setTimeout(function(){ slide.classList.remove('anim-entrance'); }, 1850);
   }
 
   // ── (Re)inicialización — se llama cada vez que cambian los banners desde el admin ──

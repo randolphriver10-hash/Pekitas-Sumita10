@@ -6,11 +6,19 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://images.unsplash.com">
 <link rel="canonical" href="" id="canonicalUrl">
-<!-- Google Analytics (GA4) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-WMWCELHGES"></script>
+<!-- Google Analytics (GA4) con Consent Mode v2: no se guarda ninguna cookie de
+     analítica hasta que el usuario acepte en el banner (o ya lo haya aceptado antes). -->
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
+  (function(){
+    var saved = null;
+    try { saved = localStorage.getItem('pekitas_cookie_consent'); } catch(e) {}
+    gtag('consent', 'default', { 'analytics_storage': saved === 'granted' ? 'granted' : 'denied' });
+  })();
+</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-WMWCELHGES"></script>
+<script>
   gtag('js', new Date());
   gtag('config', 'G-WMWCELHGES');
 </script>
@@ -1662,6 +1670,42 @@
     .pmodal-inner, .modal-inner { padding: 40px 36px; gap: 32px; }
   }
 
+  /* ══════════════════════════════════════════════════════════════
+     COOKIE CONSENT BANNER
+  ══════════════════════════════════════════════════════════════ */
+  .cookie-banner {
+    position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 10002;
+    max-width: 640px; margin: 0 auto;
+    background: var(--warm-white); border: 1px solid var(--border-b);
+    border-radius: var(--r3); box-shadow: var(--sh-xl);
+    padding: 20px 22px; display: none; gap: 16px; flex-wrap: wrap;
+    align-items: center; justify-content: space-between;
+    font-family: var(--font-body);
+    transform: translateY(16px); opacity: 0;
+    transition: transform .42s var(--ease), opacity .36s ease;
+  }
+  .cookie-banner.show { display: flex; }
+  .cookie-banner.in { transform: translateY(0); opacity: 1; }
+  .cookie-banner-text { flex: 1 1 320px; font-size: 13px; line-height: 1.6; color: var(--text-mid); }
+  .cookie-banner-actions { display: flex; gap: 10px; flex-shrink: 0; }
+  .cookie-btn {
+    padding: 11px 22px; border-radius: var(--rfull); font-family: var(--font-body);
+    font-size: 12px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase;
+    cursor: pointer; transition: all .22s var(--ease); border: 1px solid transparent; white-space: nowrap;
+  }
+  .cookie-btn-reject { background: transparent; color: var(--text-mid); border-color: var(--border-c); }
+  .cookie-btn-reject:hover { background: var(--cream-dark); color: var(--text-dark); }
+  .cookie-btn-accept { background: var(--accent-dark); color: #fff; }
+  .cookie-btn-accept:hover { background: var(--text-dark); }
+  @media (max-width: 560px) {
+    .cookie-banner { padding: 18px; flex-direction: column; align-items: stretch; text-align: center; }
+    .cookie-banner-actions { width: 100%; }
+    .cookie-btn { flex: 1; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .cookie-banner { transition: none; }
+  }
+
 </style>
 <!-- PEKITAS_DATA_INJECT -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1720,6 +1764,51 @@
 </script>
 </head>
 <body>
+
+<!-- COOKIE CONSENT BANNER -->
+<div class="cookie-banner" id="cookieBanner" role="dialog" aria-live="polite" aria-label="Preferencias de cookies">
+  <div class="cookie-banner-text">
+    Usamos cookies propias y de análisis (Google Analytics) para entender cómo se usa el sitio y mejorarlo. Podés aceptarlas o rechazarlas — tu elección no afecta tu compra.
+  </div>
+  <div class="cookie-banner-actions">
+    <button class="cookie-btn cookie-btn-reject" id="cookieRejectBtn" type="button">Rechazar</button>
+    <button class="cookie-btn cookie-btn-accept" id="cookieAcceptBtn" type="button">Aceptar</button>
+  </div>
+</div>
+<script>
+(function(){
+  var KEY = 'pekitas_cookie_consent';
+  var banner = document.getElementById('cookieBanner');
+  var acceptBtn = document.getElementById('cookieAcceptBtn');
+  var rejectBtn = document.getElementById('cookieRejectBtn');
+
+  function getSaved(){ try { return localStorage.getItem(KEY); } catch(e){ return null; } }
+  function save(val){ try { localStorage.setItem(KEY, val); } catch(e){} }
+
+  function updateConsent(granted){
+    if (typeof gtag === 'function') {
+      gtag('consent', 'update', { 'analytics_storage': granted ? 'granted' : 'denied' });
+    }
+  }
+  function hideBanner(){
+    if (!banner) return;
+    banner.classList.remove('in');
+    setTimeout(function(){ banner.classList.remove('show'); }, 400);
+  }
+  function showBanner(){
+    if (!banner) return;
+    banner.classList.add('show');
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){ banner.classList.add('in'); }); });
+  }
+
+  if (acceptBtn) acceptBtn.addEventListener('click', function(){ save('granted'); updateConsent(true); hideBanner(); });
+  if (rejectBtn) rejectBtn.addEventListener('click', function(){ save('denied'); updateConsent(false); hideBanner(); });
+
+  window.pekitasOpenCookiePrefs = showBanner;
+
+  if (getSaved() === null) showBanner();
+})();
+</script>
 
 <!-- SEARCH PANEL -->
 <div class="search-panel-overlay" id="searchOverlay" onclick="closeSearch()"></div>
@@ -2175,7 +2264,7 @@
   </div>
 
   <div class="footer-bottom">
-    <span class="footer-copy">© 2025 Pekitas Sumita. Todos los derechos reservados.</span>
+    <span class="footer-copy">© 2025 Pekitas Sumita. Todos los derechos reservados. · <a href="#" onclick="if(window.pekitasOpenCookiePrefs){window.pekitasOpenCookiePrefs();}return false;" style="color:var(--text-light);text-decoration:underline;">Preferencias de cookies</a></span>
     <div class="footer-payments">
       <span class="payment-pill">Visa</span>
       <span class="payment-pill">Mastercard</span>

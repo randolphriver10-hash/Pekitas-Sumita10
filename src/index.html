@@ -1698,9 +1698,10 @@
   .cookie-btn-accept { background: var(--accent-dark); color: #fff; }
   .cookie-btn-accept:hover { background: var(--text-dark); }
   @media (max-width: 560px) {
-    .cookie-banner { padding: 18px; flex-direction: column; align-items: stretch; text-align: center; }
-    .cookie-banner-actions { width: 100%; }
-    .cookie-btn { flex: 1; }
+    .cookie-banner { padding: 16px; flex-direction: column; align-items: stretch; gap: 12px; text-align: center; }
+    .cookie-banner-text { flex: none; }
+    .cookie-banner-actions { width: 100%; flex: none; }
+    .cookie-btn { flex: 1; padding: 10px 16px; }
   }
   @media (prefers-reduced-motion: reduce) {
     .cookie-banner { transition: none; }

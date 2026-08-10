@@ -987,6 +987,26 @@
   .pmodal-btn-cancel:hover { border-color: var(--text-dark); color: var(--text-dark); }
   .mx-footer .pmodal-btn-ws { width: 100%; margin-top: 10px; }
 
+  /* Botón "Agregar/Guardar" sin ninguna selección: se ve apagado pero sigue
+     clickeable, para que el clic dispare el shake de aviso en vez de no hacer nada. */
+  .pmodal-btn-cart.is-empty-look { opacity: .5; }
+
+  /* Shake de aviso: sacude SOLO la sección (talle o color) a la que le falta elegir
+     algo — nunca las dos juntas. Reinicia limpio en cada intento. */
+  @keyframes mxShakeX {
+    0%, 100% { transform: translateX(0); }
+    10% { transform: translateX(-14px); }
+    20% { transform: translateX(12px); }
+    30% { transform: translateX(-11px); }
+    40% { transform: translateX(9px); }
+    50% { transform: translateX(-7px); }
+    60% { transform: translateX(6px); }
+    70% { transform: translateX(-4px); }
+    80% { transform: translateX(3px); }
+    90% { transform: translateX(-2px); }
+  }
+  .mx-shake { animation: mxShakeX .6s cubic-bezier(.36,.07,.19,.97) both; outline: 2px solid #E0524A; outline-offset: 5px; border-radius: var(--r3); }
+
   .pmodal-stock-info { font-size: 12px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; padding: 5px 13px; border-radius: var(--rfull); }
   .stock-ok  { background: #E8F5E9; color: #2E7D32; }
   .stock-low { background: #FFF8E1; color: #E65100; }
@@ -3278,6 +3298,27 @@
     return `<div class="mx-summary-totals"><span>${totalQty} unidad${totalQty===1?'':'es'}</span><strong>${formatPrice(totalQty * price)}</strong></div>`;
   }
 
+  // Shake de aviso: si tocan "Agregar"/"Guardar" sin elegir nada, en vez de no hacer
+  // nada (confuso para quien no conoce la página) se sacude la sección que falta
+  // completar — el talle si todavía no tocó ninguno, o el color si abrió un talle
+  // pero no eligió color. Reinicia la animación en cada intento aunque se repita rápido.
+  function mxShake(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.remove('mx-shake');
+    void el.offsetWidth;
+    el.classList.add('mx-shake');
+    el.addEventListener('animationend', () => el.classList.remove('mx-shake'), { once: true });
+  }
+  // Devuelve true (y sacude lo que falta) si la matriz está vacía; false si ya se puede guardar.
+  function mxShakeIfEmpty(prefix, matrix) {
+    if (computeMatrixTotals(matrix).totalQty > 0) return false;
+    const ctl = mxControllers[prefix];
+    if (ctl && ctl.isPopoverOpen()) mxShake(prefix + 'Popover');
+    else mxShake(prefix + 'ChipRow');
+    return true;
+  }
+
   // ── Selector compacto talle → color → cantidad ──────────────────────────────
   // Chips de talle (una fila, poco alto) → tocar un talle despliega un popover
   // chico con los colores → tocar un color lo agrega/quita de "Tu selección" →
@@ -3479,7 +3520,7 @@
 
     const wsBtn = wsNumber ? `<button class="pmodal-btn-ws" onclick="pmodalConsultarWS()"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.118 1.523 5.85L.054 23.454a.5.5 0 0 0 .61.61l5.604-1.469A11.952 11.952 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22a9.951 9.951 0 0 1-5.16-1.436l-.369-.221-3.824 1.003 1.02-3.73-.242-.383A9.951 9.951 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg> Consultar por WhatsApp</button>` : '';
 
-    const cartBtnHTML = `<button class="pmodal-btn-cart" id="pmodalCartBtn" onclick="pmodalAddToCart()" ${stockOut?'disabled style="opacity:.5;cursor:not-allowed"':''}>
+    const cartBtnHTML = `<button class="pmodal-btn-cart" id="pmodalCartBtn" onclick="pmodalAddToCart(event)" ${stockOut?'disabled style="opacity:.5;cursor:not-allowed"':''}>
       <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display:inline;vertical-align:middle;margin-right:8px"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
       Agregar al carrito
     </button>`;
@@ -3611,8 +3652,10 @@
     if (el) el.textContent = pmodalQty;
   }
 
-  // Recalcula el total/subtotal y habilita el CTA solo si hay al menos una unidad
-  // elegida. Llamado por el controller del picker tras cada cambio en la matriz.
+  // Recalcula el total/subtotal. El botón solo se deshabilita de verdad si el
+  // producto no tiene stock — sin selección se deja tocar igual, para que
+  // pmodalAddToCart pueda detectarlo y sacudir la sección que falta completar en
+  // vez de no responder (que es justo lo confuso que había que arreglar).
   function pmodalUpdateFooter() {
     if (!pmodalMatrix || !pmodalProduct) return;
     const p = pmodalProduct;
@@ -3620,10 +3663,13 @@
     if (summary) summary.innerHTML = buildMatrixSummaryHTML(pmodalMatrix, p.price);
     const totalQty = computeMatrixTotals(pmodalMatrix).totalQty;
     const btn = document.getElementById('pmodalCartBtn');
-    if (btn) btn.disabled = totalQty === 0 || p.soldOut || !(p.stock || 0);
+    if (btn) {
+      btn.disabled = p.soldOut || !(p.stock || 0);
+      btn.classList.toggle('is-empty-look', totalQty === 0 && !btn.disabled);
+    }
   }
 
-  function pmodalAddToCart() {
+  function pmodalAddToCart(e) {
     if (!pmodalProduct) return;
     const p = pmodalProduct;
     if (p.soldOut) return; // marcado agotado manualmente
@@ -3632,6 +3678,10 @@
 
     let lines;
     if (pmodalMatrix) {
+      // stopPropagation: si se va a sacudir el popover de color, no dejar que este
+      // mismo clic (el botón está fuera del picker) dispare el listener de "click
+      // afuera cierra el popover" — si no, se cierra justo después de sacudirse.
+      if (mxShakeIfEmpty('pmodal', pmodalMatrix)) { if (e) e.stopPropagation(); return; }
       lines = [];
       Object.keys(pmodalMatrix).forEach(size => {
         Object.keys(pmodalMatrix[size]).forEach(color => {
@@ -3724,7 +3774,7 @@
         <div class="mx-summary" id="editMxSummary"></div>
         <div class="mx-actions">
           <button class="pmodal-btn-cancel" type="button" onclick="closeEditOrderModal()">Cancelar</button>
-          <button class="pmodal-btn-cart" id="editModalSaveBtn" type="button" onclick="editOrderSave()">Guardar cambios</button>
+          <button class="pmodal-btn-cart" id="editModalSaveBtn" type="button" onclick="editOrderSave(event)">Guardar cambios</button>
         </div>
       </div>`;
     mxControllers.edit = createMatrixController('edit', () => editOrderProduct, () => editOrderMatrix, editUpdateFooter);
@@ -3745,13 +3795,14 @@
     if (summary) summary.innerHTML = buildMatrixSummaryHTML(editOrderMatrix, editOrderProduct.price);
     const totalQty = computeMatrixTotals(editOrderMatrix).totalQty;
     const btn = document.getElementById('editModalSaveBtn');
-    if (btn) btn.disabled = totalQty === 0;
+    if (btn) btn.classList.toggle('is-empty-look', totalQty === 0);
   }
 
   // Reemplaza de una sola vez todas las líneas de este producto en el carrito por la
   // matriz editada — nunca add/remove incremental línea por línea.
-  function editOrderSave() {
+  function editOrderSave(e) {
     if (!editOrderProduct || !editOrderMatrix) return;
+    if (mxShakeIfEmpty('edit', editOrderMatrix)) { if (e) e.stopPropagation(); return; }
     const p = editOrderProduct;
     const lines = [];
     Object.keys(editOrderMatrix).forEach(size => {

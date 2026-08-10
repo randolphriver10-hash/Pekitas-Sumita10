@@ -1885,6 +1885,54 @@
 </head>
 <body>
 
+<!-- INTRO MÓVIL: video de bienvenida, una sola vez por sesión, solo en pantallas chicas -->
+<div id="introSplash" class="intro-splash" role="dialog" aria-label="Bienvenida a Pekitas Sumita">
+  <video id="introVideo" class="intro-video" src="https://chthxgjajyqzandlntnw.supabase.co/storage/v1/object/public/site-assets/intro-mobile.mp4" autoplay muted playsinline preload="auto"></video>
+  <button type="button" class="intro-skip" id="introSkipBtn" aria-label="Saltar intro">Saltar ›</button>
+</div>
+<style>
+  .intro-splash { display:none; position:fixed; inset:0; z-index:99999; background:#F5EFE6; align-items:center; justify-content:center; opacity:1; transition:opacity .45s cubic-bezier(0.16,1,0.3,1); }
+  .intro-splash.show { display:flex; }
+  .intro-splash.hide { opacity:0; pointer-events:none; }
+  .intro-video { width:100%; height:100%; object-fit:contain; display:block; }
+  .intro-skip { position:absolute; top:calc(16px + env(safe-area-inset-top)); right:16px; background:rgba(255,255,255,.78); backdrop-filter:blur(6px); border:1px solid rgba(0,0,0,.08); color:#6B5A50; font-family:'Nunito Sans','Segoe UI',Arial,sans-serif; font-size:12px; font-weight:600; letter-spacing:.04em; padding:9px 16px; border-radius:999px; cursor:pointer; }
+  @media (min-width:681px) { .intro-splash { display:none !important; } }
+</style>
+<script>
+(function(){
+  var isMobile = window.matchMedia('(max-width: 680px)').matches;
+  var SESSION_KEY = 'pekitas_intro_shown';
+  var alreadyShown = false;
+  try { alreadyShown = !!sessionStorage.getItem(SESSION_KEY); } catch(e) {}
+  if (!isMobile || alreadyShown) return;
+
+  var splash = document.getElementById('introSplash');
+  var video  = document.getElementById('introVideo');
+  var skipBtn = document.getElementById('introSkipBtn');
+  if (!splash || !video) return;
+
+  splash.classList.add('show');
+  document.body.style.overflow = 'hidden';
+  try { sessionStorage.setItem(SESSION_KEY, '1'); } catch(e) {}
+
+  var closed = false;
+  function closeIntro() {
+    if (closed) return;
+    closed = true;
+    splash.classList.add('hide');
+    document.body.style.overflow = '';
+    setTimeout(function(){ splash.style.display = 'none'; }, 500);
+  }
+
+  // Si el autoplay falla o el video no carga, no dejamos a nadie trabado mirando una pantalla vacía
+  var fallback = setTimeout(closeIntro, 8000);
+  video.addEventListener('ended', function(){ clearTimeout(fallback); closeIntro(); });
+  video.addEventListener('error', closeIntro);
+  if (skipBtn) skipBtn.addEventListener('click', closeIntro);
+  video.play().catch(closeIntro);
+})();
+</script>
+
 <!-- COOKIE CONSENT BANNER -->
 <div class="cookie-banner" id="cookieBanner" role="dialog" aria-live="polite" aria-label="Preferencias de cookies">
   <div class="cookie-banner-text">

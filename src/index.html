@@ -1405,9 +1405,9 @@
     .pmodal-info { gap: 14px; }
     .pmodal-name { font-size: 24px; }
     .pmodal-price { font-size: 26px; }
-    /* Botones CTA más táctiles */
-    .pmodal-btn-cart { padding: 18px; font-size: 15px; }
-    .pmodal-btn-ws   { padding: 16px; }
+    /* Botones CTA más táctiles (fuera de la matriz: el flujo simple sin talles) */
+    .pmodal-cta-wrap .pmodal-btn-cart { padding: 18px; font-size: 15px; }
+    .pmodal-cta-wrap .pmodal-btn-ws   { padding: 16px; }
     /* Colors más grandes */
     .pmodal-color-dot { width: 34px; height: 34px; }
     /* Qty buttons más grandes */
@@ -1418,11 +1418,14 @@
     /* Padding del body */
     #pmodalBody { padding: 16px; }
     /* Matriz talle × color: targets táctiles de 44px */
-    .mx-footer { margin: 20px -16px -16px; padding: 14px 16px calc(14px + env(safe-area-inset-bottom)); }
+    .mx-footer { margin: 20px -16px -16px; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); }
     .mx-qty .pmodal-qty-btn { width: 42px; height: 42px; font-size: 17px; }
     .mx-input { width: 44px; height: 42px; font-size: 14px; }
-    .mx-actions { grid-template-columns: 1fr; }
-    .pmodal-btn-cancel { order: 2; }
+    /* Cancelar/Agregar (o Guardar) lado a lado y compactos: apilados y con el padding
+       "táctil" de escritorio tapaban buena parte de la pantalla en mobile */
+    .mx-actions { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .mx-actions .pmodal-btn-cancel, .mx-actions .pmodal-btn-cart { min-height: 44px; padding: 0 12px; font-size: 13px; display: flex; align-items: center; justify-content: center; }
+    .mx-footer .pmodal-btn-ws { min-height: 40px; padding: 0 12px; margin-top: 8px; font-size: 12.5px; }
     .mx-chip { min-height: 44px; }
     .mx-popover-color { min-height: 44px; }
   }

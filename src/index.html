@@ -1885,9 +1885,10 @@
 </head>
 <body>
 
-<!-- INTRO MÓVIL: video de bienvenida, una sola vez por sesión, solo en pantallas chicas -->
+<!-- INTRO MÓVIL: video de bienvenida CON audio, una sola vez por sesión, solo en pantallas chicas -->
 <div id="introSplash" class="intro-splash" role="dialog" aria-label="Bienvenida a Pekitas Sumita">
-  <video id="introVideo" class="intro-video" src="https://chthxgjajyqzandlntnw.supabase.co/storage/v1/object/public/site-assets/intro-mobile.mp4" autoplay muted playsinline preload="auto"></video>
+  <video id="introVideo" class="intro-video" src="https://chthxgjajyqzandlntnw.supabase.co/storage/v1/object/public/site-assets/intro-mobile.mp4" autoplay playsinline preload="auto"></video>
+  <button type="button" class="intro-sound" id="introSoundBtn" aria-label="Activar sonido">🔇 Tocá para activar el sonido</button>
   <button type="button" class="intro-skip" id="introSkipBtn" aria-label="Saltar intro">Saltar ›</button>
 </div>
 <style>
@@ -1896,6 +1897,7 @@
   .intro-splash.hide { opacity:0; pointer-events:none; }
   .intro-video { width:100%; height:100%; object-fit:contain; display:block; }
   .intro-skip { position:absolute; top:calc(16px + env(safe-area-inset-top)); right:16px; background:rgba(255,255,255,.78); backdrop-filter:blur(6px); border:1px solid rgba(0,0,0,.08); color:#6B5A50; font-family:'Nunito Sans','Segoe UI',Arial,sans-serif; font-size:12px; font-weight:600; letter-spacing:.04em; padding:9px 16px; border-radius:999px; cursor:pointer; }
+  .intro-sound { display:none; position:absolute; left:50%; bottom:calc(28px + env(safe-area-inset-bottom)); transform:translateX(-50%); background:rgba(255,255,255,.9); backdrop-filter:blur(6px); border:1px solid rgba(0,0,0,.08); color:#2C2420; font-family:'Nunito Sans','Segoe UI',Arial,sans-serif; font-size:13px; font-weight:600; padding:10px 18px; border-radius:999px; cursor:pointer; white-space:nowrap; }
   @media (min-width:681px) { .intro-splash { display:none !important; } }
 </style>
 <script>
@@ -1909,6 +1911,7 @@
   var splash = document.getElementById('introSplash');
   var video  = document.getElementById('introVideo');
   var skipBtn = document.getElementById('introSkipBtn');
+  var soundBtn = document.getElementById('introSoundBtn');
   if (!splash || !video) return;
 
   splash.classList.add('show');
@@ -1929,7 +1932,22 @@
   video.addEventListener('ended', function(){ clearTimeout(fallback); closeIntro(); });
   video.addEventListener('error', closeIntro);
   if (skipBtn) skipBtn.addEventListener('click', closeIntro);
-  video.play().catch(closeIntro);
+
+  // La mayoría de los navegadores bloquean el autoplay CON sonido sin que haya habido
+  // antes un toque del usuario en el sitio. Se intenta con sonido; si el navegador lo
+  // rechaza, se reintenta muteado (para que al menos se vea) y se ofrece un botón para
+  // activar el audio con un toque, que sí está permitido tras un gesto del usuario.
+  video.play().catch(function(){
+    video.muted = true;
+    if (soundBtn) soundBtn.style.display = 'block';
+    video.play().catch(closeIntro);
+  });
+  if (soundBtn) {
+    soundBtn.addEventListener('click', function(){
+      video.muted = false;
+      soundBtn.style.display = 'none';
+    });
+  }
 })();
 </script>
 
@@ -4608,7 +4626,7 @@
   let heroPaused = false;
   let heroDragging = false;
   let heroTransitioning = false;
-  let heroFirstAutoTickDone = false;
+  let heroResumeTimeout = null;
   function heroGetInterval(){
     const s = window.PEKITAS_SETTINGS || {};
     const secs = parseFloat(s.heroCarouselSpeed);
@@ -4708,29 +4726,33 @@
 
   function heroManualGoTo(i){
     if (heroTotal() < 2) return;
-    heroPauseAutoplay();
     heroSlideTo(i);
-    heroResumeAutoplay();
+    heroAfterManualNav();
   }
 
-  // ── AUTOPLAY: una única transición automática (al segundo banner), después queda quieto ──
+  // ── AUTOPLAY: cicla indefinidamente entre todos los banners ──
   function heroAutoTick(){
     if (heroPaused || heroDragging || document.hidden) return;
     if (heroTotal() < 2) return;
-    heroFirstAutoTickDone = true;
     heroSlideTo(heroIdx + 1, true); // desliza como el swipe manual, pero más lento
-    clearInterval(heroTimer);
-    heroTimer = null;
   }
   function heroStartAutoplay(){
     clearInterval(heroTimer);
     heroTimer = null;
-    if (heroFirstAutoTickDone) return; // ya ocurrió la única transición automática permitida
     if (heroTotal() < 2) return;
     heroTimer = setInterval(heroAutoTick, heroGetInterval());
   }
   function heroPauseAutoplay(){ heroPaused = true; }
-  function heroResumeAutoplay(){ heroPaused = false; heroStartAutoplay(); }
+  function heroResumeAutoplay(){ heroPaused = false; }
+  // Tras una navegación manual real (flechas, puntitos, swipe que cambió de banner): el
+  // autoplay no se desactiva, pero se pausa un rato para no "pisarle" el gesto al usuario,
+  // y se reactiva solo pasado ese tiempo — no hace falta reprogramar el intervalo, que ya
+  // sigue corriendo en segundo plano; alcanza con bajar/subir la bandera heroPaused.
+  function heroAfterManualNav(){
+    heroPaused = true;
+    clearTimeout(heroResumeTimeout);
+    heroResumeTimeout = setTimeout(function(){ heroPaused = false; }, heroGetInterval());
+  }
 
   // ── Entrada inicial: solo la primera vez que se pinta el primer banner ──
   function heroPlayEntrance(slide){
@@ -4852,11 +4874,13 @@
       if (deltaX <= -threshold && next) {
         if (prev) prev.classList.remove('is-visible');
         heroSlideTo(heroIdx + 1);
+        heroAfterManualNav(); // hubo navegación real: pausa con reactivación diferida
       } else if (deltaX >= threshold && prev) {
         if (next) next.classList.remove('is-visible');
         heroSlideTo(heroIdx - 1);
+        heroAfterManualNav();
       } else {
-        // No llegó al umbral: vuelve suavemente a su lugar.
+        // No llegó al umbral: vuelve suavemente a su lugar, no hubo navegación real.
         // Solo se toca el elemento que realmente se reveló (según el signo de deltaX),
         // para no pisarlo dos veces cuando prev y next son el mismo slide (2 banners).
         const revealed = deltaX < 0 ? next : (deltaX > 0 ? prev : null);
@@ -4869,9 +4893,9 @@
           [active, revealed].forEach(function(elm){ if (elm) { elm.classList.remove('anim-slide'); elm.style.transform = ''; } });
           if (revealed) revealed.classList.remove('is-visible');
         }, heroReduceMotion ? 0 : 740);
+        heroResumeAutoplay();
       }
       deltaX = 0;
-      heroResumeAutoplay();
     }
 
     el.addEventListener('touchstart', function(e){ if (e.touches.length === 1) begin(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });

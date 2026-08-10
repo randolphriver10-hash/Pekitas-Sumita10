@@ -534,17 +534,17 @@
   .cart-item-info { flex: 1; min-width: 0; }
   .cart-item-name { font-family: var(--font-display); font-size: 18px; font-weight: 300; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 3px; }
   .cart-item-sub { font-size: 11px; color: var(--text-light); letter-spacing: .08em; margin-bottom: 13px; }
-  .cart-item-controls { display: flex; align-items: center; gap: 0; }
-  .qty-btn { width: 30px; height: 30px; background: var(--cream-deep); border: none; border-radius: var(--r1); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 17px; color: var(--text-dark); transition: all .2s var(--ease); flex-shrink: 0; }
-  .qty-btn:hover { background: var(--blush); transform: scale(1.12); }
-  .qty-btn:active { transform: scale(.92); }
-  .qty-num { width: 32px; text-align: center; font-size: 14px; }
-  .cart-item-price { font-family: var(--font-display); font-size: 18px; font-weight: 400; margin-top: 5px; }
+  .cart-item-price { font-family: var(--font-display); font-size: 15px; font-weight: 400; margin-top: 3px; color: var(--text-dark); }
   .cart-item-remove { background: none; border: none; cursor: pointer; color: var(--text-light); padding: 4px; border-radius: var(--r1); transition: all .2s; flex-shrink: 0; margin-top: 3px; }
   .cart-item-remove:hover { color: #C0524A; background: rgba(192,82,74,.08); }
   .cart-item-variants { display: flex; align-items: center; gap: 7px; margin: 4px 0 3px; }
   .cart-variant-color { display: inline-block; width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid rgba(0,0,0,.12); flex-shrink: 0; }
   .cart-variant-size { font-size: 10px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; background: var(--cream-deep); color: var(--text-mid); padding: 1px 6px; border-radius: 4px; border: 1px solid var(--border-c); }
+  .cart-item-viewmore { display: inline-flex; align-items: center; gap: 4px; margin-top: 5px; background: none; border: none; padding: 0; cursor: pointer; font-family: var(--font-body); font-size: 11px; font-weight: 600; color: var(--text-mid); transition: color .18s; }
+  .cart-item-viewmore:hover { color: var(--text-dark); }
+  .cart-item-detail { margin-top: 8px; padding: 8px 10px; background: var(--cream-deep); border-radius: var(--r2); display: flex; flex-direction: column; gap: 5px; }
+  .cart-item-detail-row { display: flex; justify-content: space-between; gap: 8px; font-size: 11.5px; color: var(--text-mid); }
+  .cart-item-detail-row span:first-child { flex: 1; color: var(--text-dark); }
   .cart-item-edit { display: inline-flex; align-items: center; gap: 5px; margin-top: 9px; background: var(--cream-deep); border: 1px solid var(--border-c); border-radius: var(--rfull); padding: 5px 12px 5px 9px; cursor: pointer; font-family: var(--font-body); font-size: 10.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--text-dark); transition: all .2s var(--ease); }
   .cart-item-edit:hover { background: var(--blush); border-color: var(--taupe); transform: translateY(-1px); }
   .cart-item-edit svg { flex-shrink: 0; opacity: .75; }
@@ -937,31 +937,51 @@
   .pmodal-qty-btn:disabled { opacity: .35; cursor: not-allowed; }
   .pmodal-qty-num { width: 44px; text-align: center; font-size: 15px; font-weight: 500; }
 
-  /* ── Matriz talle × color (editar/agregar pedido) ── */
-  .pmodal-matrix { display: flex; flex-direction: column; }
-  .mx-size-group { padding: 14px 0; border-bottom: 1px solid var(--border-a); }
-  .mx-size-group:last-child { border-bottom: none; }
-  .mx-size-label { font-size: 13px; font-weight: 700; color: var(--text-dark); margin-bottom: 10px; }
-  .mx-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px 0; flex-wrap: wrap; }
-  .mx-row.is-out-row { opacity: .55; }
-  .mx-color { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 90px; }
-  .mx-swatch { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid rgba(0,0,0,.12); flex-shrink: 0; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+  /* ── Selector compacto talle → color → cantidad (editar/agregar pedido) ── */
+  .mx-picker { display: flex; flex-direction: column; gap: 10px; }
+  .mx-swatch { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid rgba(0,0,0,.12); flex-shrink: 0; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
   .mx-swatch.is-out { opacity: .35; filter: grayscale(1); }
   .mx-label { font-size: 12.5px; color: var(--text-mid); }
+
+  /* Chips de talle: una fila compacta en vez de una lista larga por talle */
+  .mx-chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .mx-chip { min-height: 40px; padding: 0 14px; border-radius: var(--rfull); border: 1.5px solid var(--border-c); background: none; cursor: pointer; font-family: var(--font-body); font-size: 13px; color: var(--text-dark); display: inline-flex; align-items: center; gap: 6px; transition: all .18s; }
+  .mx-chip:hover { border-color: var(--text-dark); }
+  .mx-chip.has-sel { border-color: var(--text-dark); background: var(--cream-deep); font-weight: 600; }
+  .mx-chip.open { border-color: var(--taupe); background: var(--blush); }
+  .mx-chip-count { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: var(--rfull); background: var(--text-dark); color: #fff; font-size: 10.5px; font-weight: 700; }
+
+  /* Popover de colores: se despliega debajo de la fila de talles, no ocupa espacio si está cerrado */
+  .mx-popover { border: 1px solid var(--border-c); border-radius: var(--r3); padding: 14px; background: var(--cream); animation: mxPopIn .18s var(--ease); }
+  @keyframes mxPopIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+  .mx-popover-title { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text-mid); margin-bottom: 10px; }
+  .mx-popover-colors { display: flex; flex-wrap: wrap; gap: 8px; }
+  .mx-popover-color { display: inline-flex; align-items: center; gap: 7px; min-height: 40px; padding: 0 12px 0 8px; border-radius: var(--rfull); border: 1.5px solid var(--border-c); background: var(--warm-white); cursor: pointer; font-family: var(--font-body); font-size: 12.5px; color: var(--text-dark); transition: all .18s; }
+  .mx-popover-color:hover:not(.is-out) { border-color: var(--text-dark); }
+  .mx-popover-color.active { border-color: var(--text-dark); background: var(--text-dark); color: #fff; }
+  .mx-popover-color.active .mx-swatch { border-color: rgba(255,255,255,.6); }
+  .mx-popover-color.is-out { opacity: .45; cursor: not-allowed; }
+
+  /* Lista de la selección ya hecha: acá vive la cantidad, separada de elegir talle/color */
+  .mx-selection-list { display: flex; flex-direction: column; }
+  .mx-selection-title { font-size: 10.5px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--text-mid); margin-bottom: 8px; }
+  .mx-selection-empty { font-size: 12.5px; color: var(--text-light); padding: 4px 0; }
+  .mx-selection-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border-a); }
+  .mx-selection-row:last-child { border-bottom: none; }
+  .mx-selection-info { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; font-size: 12.5px; color: var(--text-dark); }
+  .mx-selection-remove { width: 30px; height: 30px; border-radius: 50%; border: none; background: none; color: var(--text-light); cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all .18s; }
+  .mx-selection-remove:hover { background: var(--danger-light,#FEF2F2); color: #C0524A; }
+
   .mx-qty { display: flex; align-items: center; border: 1.5px solid var(--border-c); border-radius: var(--r2); overflow: hidden; flex-shrink: 0; }
-  .mx-qty .pmodal-qty-btn { width: 34px; height: 34px; font-size: 15px; }
-  .mx-input { width: 40px; height: 34px; border: none; border-left: 1px solid var(--border-c); border-right: 1px solid var(--border-c); text-align: center; font-family: var(--font-body); font-size: 13px; color: var(--text-dark); background: none; -moz-appearance: textfield; }
+  .mx-qty .pmodal-qty-btn { width: 32px; height: 32px; font-size: 15px; }
+  .mx-input { width: 38px; height: 32px; border: none; border-left: 1px solid var(--border-c); border-right: 1px solid var(--border-c); text-align: center; font-family: var(--font-body); font-size: 13px; color: var(--text-dark); background: none; -moz-appearance: textfield; }
   .mx-input::-webkit-outer-spin-button, .mx-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   .mx-input:disabled { color: var(--text-light); }
 
   .mx-footer { position: sticky; bottom: 0; margin: 20px -30px -30px; padding: 16px 30px calc(16px + env(safe-area-inset-bottom)); background: rgba(254,252,249,.97); backdrop-filter: blur(14px); border-top: 1px solid var(--border-a); box-shadow: 0 -8px 24px rgba(26,22,18,.07); z-index: 8; }
   .mx-summary { min-height: 20px; margin-bottom: 12px; }
   .mx-summary-empty { font-size: 12.5px; color: var(--text-light); }
-  .mx-summary-row { display: flex; gap: 8px; font-size: 12px; color: var(--text-mid); margin-bottom: 4px; flex-wrap: wrap; }
-  .mx-summary-label { font-weight: 700; letter-spacing: .04em; text-transform: uppercase; font-size: 10px; color: var(--text-light); flex-shrink: 0; padding-top: 1px; }
-  .mx-summary-colors { display: inline-flex; gap: 10px; flex-wrap: wrap; }
-  .mx-summary-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; border: 1px solid rgba(0,0,0,.15); margin-right: 4px; vertical-align: -1px; }
-  .mx-summary-totals { display: flex; justify-content: space-between; align-items: baseline; font-family: var(--font-display); font-size: 17px; color: var(--text-dark); margin-top: 8px; }
+  .mx-summary-totals { display: flex; justify-content: space-between; align-items: baseline; font-family: var(--font-display); font-size: 17px; color: var(--text-dark); }
   .mx-actions { display: grid; grid-template-columns: auto 1fr; gap: 10px; }
   .pmodal-btn-cancel { padding: 14px; border-radius: var(--r3); background: none; border: 1.5px solid var(--border-c); cursor: pointer; font-family: var(--font-body); font-size: 13px; font-weight: 500; color: var(--text-mid); transition: all .18s; }
   .pmodal-btn-cancel:hover { border-color: var(--text-dark); color: var(--text-dark); }
@@ -1403,6 +1423,8 @@
     .mx-input { width: 44px; height: 42px; font-size: 14px; }
     .mx-actions { grid-template-columns: 1fr; }
     .pmodal-btn-cancel { order: 2; }
+    .mx-chip { min-height: 44px; }
+    .mx-popover-color { min-height: 44px; }
   }
 
   /* ══════════════════════════════════════════════════════════════
@@ -2882,6 +2904,8 @@
   function saveCart() {
     try { localStorage.setItem('pekitas_cart', JSON.stringify(cart)); } catch(e) {}
   }
+  // Qué tarjetas de producto tienen el detalle ("Ver más") desplegado en el carrito
+  let expandedCartProducts = new Set();
   function getTotal() { return cart.reduce((s,i) => s + i.price * i.qty, 0); }
   // Dos líneas del mismo producto con distinto color/talle deben quedar separadas en el carrito
   function cartKey(item) { return item.id + '|' + (item.selectedColor||'') + '|' + (item.selectedSize||''); }
@@ -2906,28 +2930,49 @@
       return;
     }
     footer.style.display = 'block';
-    body.innerHTML = cart.map((item, idx) => `
-      <div class="cart-item" id="item-${idx}">
-        <div class="cart-item-img"><img src="${item.img}" alt="${item.name}" onerror="this.parentElement.style.background='linear-gradient(145deg,#F2E4DC,#E8D8CE)';this.style.display='none'"></div>
-        <div class="cart-item-info">
-          <div class="cart-item-name">${item.name}</div>
-          <div class="cart-item-sub">${item.sub}</div>
-          ${(item.selectedColor || item.selectedSize) ? `
+    // Se agrupa por producto: un producto con varias combinaciones talle/color queda en
+    // UNA sola tarjeta (con "Ver más" para el detalle), no una tarjeta por combinación.
+    const productIds = [...new Set(cart.map(i => i.id))];
+    body.innerHTML = productIds.map(id => {
+      const lines = cart.filter(i => i.id === id);
+      const first = lines[0];
+      const groupQty = lines.reduce((s,l) => s+l.qty, 0);
+      const groupSubtotal = lines.reduce((s,l) => s+l.price*l.qty, 0);
+      const multi = lines.length > 1;
+      const expanded = expandedCartProducts.has(id);
+
+      const variantsInlineHTML = (!multi && (first.selectedColor || first.selectedSize)) ? `
           <div class="cart-item-variants">
-            ${item.selectedColor ? `<span class="cart-variant-color" style="background:${item.selectedColor}" title="${hexToColorName(item.selectedColor)}"></span>` : ''}
-            ${item.selectedSize  ? `<span class="cart-variant-size">${item.selectedSize}</span>` : ''}
-          </div>` : ''}
-          <div class="cart-item-controls">
-            <button class="qty-btn" onclick="changeQty(${idx},-1)">-</button>
-            <span class="qty-num">${item.qty}</span>
-            <button class="qty-btn" onclick="changeQty(${idx},1)">+</button>
-          </div>
-          <div class="cart-item-price">${formatPrice(item.price * item.qty)}</div>
-          <button class="cart-item-edit" onclick="editCartItem('${item.id}')" aria-label="Editar pedido de ${item.name}"><svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>Editar pedido</button>
+            ${first.selectedColor ? `<span class="cart-variant-color" style="background:${first.selectedColor}" title="${hexToColorName(first.selectedColor)}"></span>` : ''}
+            ${first.selectedSize  ? `<span class="cart-variant-size">Talle ${first.selectedSize}</span>` : ''}
+          </div>` : '';
+
+      const viewMoreHTML = multi ? `<button class="cart-item-viewmore" onclick="toggleCartDetail('${id}')" aria-expanded="${expanded}">${expanded ? 'Ver menos' : 'Ver más'} <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="transform:rotate(${expanded?180:0}deg);transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg></button>` : '';
+
+      const detailHTML = (multi && expanded) ? `<div class="cart-item-detail">${lines.map(l => {
+        const variant = [l.selectedSize ? 'Talle '+l.selectedSize : '', l.selectedColor ? hexToColorName(l.selectedColor) : ''].filter(Boolean).join(' · ') || 'Cantidad';
+        return `<div class="cart-item-detail-row"><span>${variant}</span><span>x${l.qty}</span><span>${formatPrice(l.price*l.qty)}</span></div>`;
+      }).join('')}</div>` : '';
+
+      return `
+      <div class="cart-item" id="item-${id}">
+        <div class="cart-item-img"><img src="${first.img}" alt="${first.name}" onerror="this.parentElement.style.background='linear-gradient(145deg,#F2E4DC,#E8D8CE)';this.style.display='none'"></div>
+        <div class="cart-item-info">
+          <div class="cart-item-name">${first.name}</div>
+          <div class="cart-item-sub">${first.sub}</div>
+          ${variantsInlineHTML}
+          <div class="cart-item-price">${groupQty} unidad${groupQty===1?'':'es'} · ${formatPrice(groupSubtotal)}</div>
+          ${viewMoreHTML}
+          ${detailHTML}
+          <button class="cart-item-edit" onclick="editCartItem('${id}')" aria-label="Editar pedido de ${first.name}"><svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>Editar pedido</button>
         </div>
-        <button class="cart-item-remove" onclick="removeFromCart(${idx})" title="Eliminar"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
-      </div>
-    `).join('');
+        <button class="cart-item-remove" onclick="removeProductFromCart('${id}')" title="Eliminar"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      </div>`;
+    }).join('');
+  }
+  function toggleCartDetail(id) {
+    if (expandedCartProducts.has(id)) expandedCartProducts.delete(id); else expandedCartProducts.add(id);
+    renderCart();
   }
   function addToCart(e, product, qty) {
     if (e && e.stopPropagation) e.stopPropagation();
@@ -2940,16 +2985,11 @@
     updateBadge(); renderCart();
     showCartToast(product.name, product.img, product.price);
   }
-  function changeQty(idx, delta) {
-    const item = cart[idx];
-    if (!item) return;
-    item.qty += delta;
-    if (item.qty <= 0) cart.splice(idx, 1);
-    saveCart();
-    updateBadge(); renderCart();
-  }
-  function removeFromCart(idx) {
-    cart.splice(idx, 1);
+  // Quita todas las combinaciones de este producto del carrito (la cantidad por
+  // combinación se ajusta desde "Editar pedido", no con un stepper por línea acá)
+  function removeProductFromCart(id) {
+    cart = cart.filter(i => i.id !== id);
+    expandedCartProducts.delete(id);
     saveCart();
     updateBadge(); renderCart();
     showToast('Producto eliminado del carrito');
@@ -3129,7 +3169,7 @@
 
   // ─── PRODUCT MODAL (ver/agregar) + EDITAR PEDIDO (ajustar algo ya agregado) ────
   // Dos modales totalmente independientes que comparten solo la lógica de la matriz
-  // talle × color (computeMatrixTotals / buildMatrixSummaryHTML / buildMatrixRowsHTML
+  // talle × color (computeMatrixTotals / buildMatrixSummaryHTML / createMatrixController
   // más abajo): el de producto muestra galería/descripción/tags para descubrir y
   // agregar; el de "Editar pedido" es minimal y solo ajusta lo que ya está en el
   // carrito, sin mezclar estado ni DOM entre los dos.
@@ -3230,39 +3270,145 @@
   }
 
   function buildMatrixSummaryHTML(matrix, price) {
-    const { bySize, byColor, totalQty } = computeMatrixTotals(matrix);
-    if (totalQty === 0) return `<div class="mx-summary-empty">Elegí al menos un talle y cantidad</div>`;
-    const byColorParts = Object.keys(byColor).map(c => `<span class="mx-summary-dot" style="background:${c}"></span>${byColor[c]}`);
-    return `
-      <div class="mx-summary-row"><span class="mx-summary-label">Por talle</span><span class="mx-summary-val">${bySize.map(s => `Talle ${s.size}: ${s.qty}`).join(' · ')}</span></div>
-      ${byColorParts.length ? `<div class="mx-summary-row"><span class="mx-summary-label">Por color</span><span class="mx-summary-val mx-summary-colors">${byColorParts.join('')}</span></div>` : ''}
-      <div class="mx-summary-totals"><span>${totalQty} unidad${totalQty===1?'':'es'}</span><strong>${formatPrice(totalQty * price)}</strong></div>`;
+    const { totalQty } = computeMatrixTotals(matrix);
+    if (totalQty === 0) return `<div class="mx-summary-empty">Elegí al menos un talle y color</div>`;
+    return `<div class="mx-summary-totals"><span>${totalQty} unidad${totalQty===1?'':'es'}</span><strong>${formatPrice(totalQty * price)}</strong></div>`;
   }
 
-  // idPrefix + changeFnName/setFnName separan los ids y handlers de cada modal (pmodal
-  // vs. editar-pedido) para que no se pisen si en algún momento pudieran coexistir.
-  function buildMatrixRowsHTML(p, matrix, idPrefix, changeFnName, setFnName) {
-    const colorList = pmodalColorList(p);
-    return productSizes(p).map((size, si) => `
-      <div class="mx-size-group">
-        <div class="mx-size-label">Talle ${size}</div>
-        ${colorList.map((c, ci) => {
-          const out = c && isColorOut(p, c);
-          const qty = matrix[size][c] || 0;
-          const swatch = c ? `<span class="mx-swatch ${out?'is-out':''}" style="background:${c}" title="${out?'Agotado - ':''}${c}"></span>` : '';
-          const label = c ? '' : '<span class="mx-label">Color único</span>';
-          const aria = `talle ${size}${c?' color '+c:''}`;
-          return `<div class="mx-row ${out?'is-out-row':''}">
-            <div class="mx-color">${swatch}${label}</div>
-            <div class="mx-qty">
-              <button class="pmodal-qty-btn" type="button" aria-label="Restar unidad, ${aria}" ${out?'disabled':''} onclick="${changeFnName}(${si},${ci},-1)">-</button>
-              <input class="mx-input" id="${idPrefix}q-${si}-${ci}" type="number" min="0" inputmode="numeric" aria-label="Cantidad, ${aria}" value="${qty}" ${out?'disabled':''} onchange="${setFnName}(${si},${ci},this.value)">
-              <button class="pmodal-qty-btn" type="button" aria-label="Sumar unidad, ${aria}" ${out?'disabled':''} onclick="${changeFnName}(${si},${ci},1)">+</button>
-            </div>
-          </div>`;
-        }).join('')}
-      </div>`).join('');
+  // ── Selector compacto talle → color → cantidad ──────────────────────────────
+  // Chips de talle (una fila, poco alto) → tocar un talle despliega un popover
+  // chico con los colores → tocar un color lo agrega/quita de "Tu selección" →
+  // la cantidad se ajusta aparte, en esa lista, no en el popover de colores.
+  function buildPickerContainerHTML(idPrefix) {
+    return `<div class="mx-picker" id="${idPrefix}Picker">
+      <div class="pmodal-section-label">Talle</div>
+      <div class="mx-chip-row" id="${idPrefix}ChipRow"></div>
+      <div class="mx-popover" id="${idPrefix}Popover" style="display:none;"></div>
+      <div class="mx-selection-list" id="${idPrefix}SelectionList"></div>
+    </div>`;
   }
+
+  const mxControllers = {};
+  function mxCtl(prefix) { return mxControllers[prefix]; }
+
+  // getProduct/getMatrix: closures hacia pmodalProduct/pmodalMatrix o
+  // editOrderProduct/editOrderMatrix — así la misma lógica de interacción sirve para
+  // los dos modales sin compartir estado entre ellos.
+  function createMatrixController(prefix, getProduct, getMatrix, updateFooterFn) {
+    let openSize = null;
+    const sizesList = () => productSizes(getProduct());
+    const colorsList = () => pmodalColorList(getProduct());
+
+    function renderChips() {
+      const p = getProduct(), matrix = getMatrix();
+      const el = document.getElementById(prefix + 'ChipRow');
+      if (!el) return;
+      el.innerHTML = sizesList().map((size, si) => {
+        const sizeQty = Object.values(matrix[size]).reduce((a,b) => a+b, 0);
+        const isOpen = openSize === size;
+        return `<button type="button" class="mx-chip ${sizeQty>0?'has-sel':''} ${isOpen?'open':''}" aria-expanded="${isOpen}" aria-haspopup="true" onclick="mxCtl('${prefix}').toggleChip(${si})">Talle ${size}${sizeQty>0?` <span class="mx-chip-count">${sizeQty}</span>`:''}</button>`;
+      }).join('');
+    }
+
+    function renderPopover() {
+      const el = document.getElementById(prefix + 'Popover');
+      if (!el) return;
+      if (openSize === null) { el.style.display = 'none'; el.innerHTML = ''; return; }
+      const p = getProduct(), matrix = getMatrix();
+      el.style.display = 'block';
+      el.innerHTML = `
+        <div class="mx-popover-title">Talle ${openSize} — elegí color</div>
+        <div class="mx-popover-colors">
+          ${colorsList().map((c, ci) => {
+            const out = c && isColorOut(p, c);
+            const active = (matrix[openSize][c] || 0) > 0;
+            const swatch = c ? `<span class="mx-swatch ${out?'is-out':''}" style="background:${c}"></span>` : '';
+            const label = c ? hexToColorName(c) : 'Color único';
+            return `<button type="button" class="mx-popover-color ${active?'active':''} ${out?'is-out':''}" ${out?'disabled':''} aria-pressed="${active}" onclick="mxCtl('${prefix}').toggleColor(${ci})">${swatch}<span>${label}</span></button>`;
+          }).join('')}
+        </div>`;
+    }
+
+    function renderSelection() {
+      const el = document.getElementById(prefix + 'SelectionList');
+      if (!el) return;
+      const matrix = getMatrix(), sizes = sizesList(), colors = colorsList();
+      const rows = [];
+      sizes.forEach((size, si) => colors.forEach((c, ci) => {
+        const qty = matrix[size][c] || 0;
+        if (qty > 0) rows.push({ si, ci, size, color: c, qty });
+      }));
+      if (!rows.length) { el.innerHTML = `<div class="mx-selection-empty">Todavía no elegiste ningún talle</div>`; return; }
+      el.innerHTML = `<div class="mx-selection-title">Tu selección</div>` + rows.map(r => {
+        const swatch = r.color ? `<span class="mx-swatch" style="background:${r.color}"></span>` : '';
+        const label = r.color ? hexToColorName(r.color) : 'Color único';
+        const aria = `talle ${r.size}, ${label}`;
+        return `<div class="mx-selection-row">
+          <span class="mx-selection-info">${swatch}Talle ${r.size} · ${label}</span>
+          <div class="mx-qty">
+            <button type="button" class="pmodal-qty-btn" aria-label="Restar unidad, ${aria}" onclick="mxCtl('${prefix}').changeQty(${r.si},${r.ci},-1)">-</button>
+            <input class="mx-input" type="number" min="0" inputmode="numeric" aria-label="Cantidad, ${aria}" value="${r.qty}" onchange="mxCtl('${prefix}').setQty(${r.si},${r.ci},this.value)">
+            <button type="button" class="pmodal-qty-btn" aria-label="Sumar unidad, ${aria}" onclick="mxCtl('${prefix}').changeQty(${r.si},${r.ci},1)">+</button>
+          </div>
+          <button type="button" class="mx-selection-remove" aria-label="Quitar ${aria}" onclick="mxCtl('${prefix}').removeCombo(${r.si},${r.ci})">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </div>`;
+      }).join('');
+    }
+
+    function setQtyRaw(si, ci, qty) {
+      const p = getProduct(), matrix = getMatrix();
+      const size = sizesList()[si], color = colorsList()[ci];
+      const max = p?.stock || 99;
+      matrix[size][color] = Math.max(0, Math.min(max, Math.floor(qty) || 0));
+    }
+
+    return {
+      toggleChip(si) {
+        const size = sizesList()[si];
+        openSize = (openSize === size) ? null : size;
+        renderChips(); renderPopover();
+      },
+      toggleColor(ci) {
+        if (openSize === null) return;
+        const matrix = getMatrix(), color = colorsList()[ci];
+        matrix[openSize][color] = (matrix[openSize][color] || 0) > 0 ? 0 : 1;
+        renderChips(); renderPopover(); renderSelection(); updateFooterFn();
+      },
+      changeQty(si, ci, delta) {
+        const matrix = getMatrix(), size = sizesList()[si], color = colorsList()[ci];
+        setQtyRaw(si, ci, (matrix[size][color] || 0) + delta);
+        renderChips(); renderPopover(); renderSelection(); updateFooterFn();
+      },
+      setQty(si, ci, rawVal) {
+        setQtyRaw(si, ci, parseInt(rawVal, 10));
+        renderChips(); renderPopover(); renderSelection(); updateFooterFn();
+      },
+      removeCombo(si, ci) {
+        setQtyRaw(si, ci, 0);
+        renderChips(); renderPopover(); renderSelection(); updateFooterFn();
+      },
+      closePopover() {
+        if (openSize === null) return false;
+        openSize = null;
+        renderChips(); renderPopover();
+        return true;
+      },
+      isPopoverOpen() { return openSize !== null; },
+      renderAll() { renderChips(); renderPopover(); renderSelection(); updateFooterFn(); },
+    };
+  }
+
+  // Cierra el popover de color abierto si se toca fuera del picker
+  document.addEventListener('click', e => {
+    ['pmodal', 'edit'].forEach(prefix => {
+      const ctl = mxControllers[prefix];
+      if (!ctl || !ctl.isPopoverOpen()) return;
+      const picker = document.getElementById(prefix + 'Picker');
+      if (picker && !picker.contains(e.target)) ctl.closePopover();
+    });
+  });
 
   function openProductModal(productId) {
     const p = getAllProducts().find(x => x.id === productId);
@@ -3319,7 +3465,7 @@
     // Fallback sin talles (raro: producto sin sizes cargados) — solo color simple + cantidad, sin matriz
     const colorsHTML = (!hasSizes && p.colors && p.colors.length) ? `<div><div class="pmodal-section-label">Color</div><div class="pmodal-colors">${p.colors.map(c => colorDotHTML(c, c===pmodalSelectedColor, `pmodalSetColor('${c.replace(/'/g,"\'")}')`)).join('')}</div></div>` : '';
 
-    const matrixHTML = hasSizes ? `<div><div class="pmodal-section-label">Elegí color y cantidad por talle</div><div class="pmodal-matrix" id="pmodalMatrixWrap">${buildMatrixRowsHTML(p, pmodalMatrix, 'pmodal', 'pmodalMxChangeQty', 'pmodalMxSetQty')}</div></div>` : '';
+    const matrixHTML = hasSizes ? buildPickerContainerHTML('pmodal') : '';
 
     const wsBtn = wsNumber ? `<button class="pmodal-btn-ws" onclick="pmodalConsultarWS()"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.118 1.523 5.85L.054 23.454a.5.5 0 0 0 .61.61l5.604-1.469A11.952 11.952 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22a9.951 9.951 0 0 1-5.16-1.436l-.369-.221-3.824 1.003 1.02-3.73-.242-.383A9.951 9.951 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg> Consultar por WhatsApp</button>` : '';
 
@@ -3376,7 +3522,10 @@
       ${matrixFooterHTML}
     `;
 
-    if (hasSizes) pmodalUpdateFooter();
+    if (hasSizes) {
+      mxControllers.pmodal = createMatrixController('pmodal', () => pmodalProduct, () => pmodalMatrix, pmodalUpdateFooter);
+      mxControllers.pmodal.renderAll();
+    }
     document.getElementById('pmodal').setAttribute('aria-label', 'Detalle de ' + p.name);
     document.getElementById('pmodalOverlay').classList.add('open');
     document.getElementById('pmodal').classList.add('open');
@@ -3452,35 +3601,8 @@
     if (el) el.textContent = pmodalQty;
   }
 
-  // si/ci: índices dentro de productSizes(pmodalProduct) / pmodalColorList(pmodalProduct)
-  // — se resuelven acá para no tener que meter talles/colores con comillas en el HTML
-  function pmodalMxResolve(si, ci) {
-    const p = pmodalProduct;
-    const size = productSizes(p)[si];
-    const color = pmodalColorList(p)[ci];
-    return { size, color };
-  }
-  function pmodalMxSet(si, ci, qty) {
-    const { size, color } = pmodalMxResolve(si, ci);
-    if (!pmodalMatrix || !pmodalMatrix[size]) return;
-    const max = pmodalProduct?.stock || 99;
-    qty = Math.max(0, Math.min(max, Math.floor(qty) || 0));
-    pmodalMatrix[size][color] = qty;
-    const input = document.getElementById('mxq-' + si + '-' + ci);
-    if (input) input.value = qty;
-    pmodalUpdateFooter();
-  }
-  function pmodalMxChangeQty(si, ci, delta) {
-    const { size, color } = pmodalMxResolve(si, ci);
-    pmodalMxSet(si, ci, (pmodalMatrix[size][color] || 0) + delta);
-  }
-  function pmodalMxSetQty(si, ci, rawVal) {
-    pmodalMxSet(si, ci, parseInt(rawVal, 10));
-  }
-
-  // Recalcula "Por talle" / "Por color" / total / subtotal y habilita el CTA solo si hay
-  // al menos una unidad elegida. Nunca re-renderiza la matriz entera (perdería el foco
-  // del input que el cliente está tocando).
+  // Recalcula el total/subtotal y habilita el CTA solo si hay al menos una unidad
+  // elegida. Llamado por el controller del picker tras cada cambio en la matriz.
   function pmodalUpdateFooter() {
     if (!pmodalMatrix || !pmodalProduct) return;
     const p = pmodalProduct;
@@ -3587,7 +3709,7 @@
           <div class="editmodal-product-price">${formatPrice(p.price)} c/u</div>
         </div>
       </div>
-      <div class="mx-matrix">${buildMatrixRowsHTML(p, editOrderMatrix, 'edit', 'editMxChangeQty', 'editMxSetQty')}</div>
+      ${buildPickerContainerHTML('edit')}
       <div class="mx-footer">
         <div class="mx-summary" id="editMxSummary"></div>
         <div class="mx-actions">
@@ -3595,7 +3717,8 @@
           <button class="pmodal-btn-cart" id="editModalSaveBtn" type="button" onclick="editOrderSave()">Guardar cambios</button>
         </div>
       </div>`;
-    editUpdateFooter();
+    mxControllers.edit = createMatrixController('edit', () => editOrderProduct, () => editOrderMatrix, editUpdateFooter);
+    mxControllers.edit.renderAll();
   }
 
   function closeEditOrderModal() {
@@ -3604,28 +3727,6 @@
     document.body.style.overflow = '';
     editOrderProduct = null;
     editOrderMatrix = null;
-  }
-
-  function editMxResolve(si, ci) {
-    const p = editOrderProduct;
-    return { size: productSizes(p)[si], color: pmodalColorList(p)[ci] };
-  }
-  function editMxSet(si, ci, qty) {
-    const { size, color } = editMxResolve(si, ci);
-    if (!editOrderMatrix || !editOrderMatrix[size]) return;
-    const max = editOrderProduct?.stock || 99;
-    qty = Math.max(0, Math.min(max, Math.floor(qty) || 0));
-    editOrderMatrix[size][color] = qty;
-    const input = document.getElementById('editq-' + si + '-' + ci);
-    if (input) input.value = qty;
-    editUpdateFooter();
-  }
-  function editMxChangeQty(si, ci, delta) {
-    const { size, color } = editMxResolve(si, ci);
-    editMxSet(si, ci, (editOrderMatrix[size][color] || 0) + delta);
-  }
-  function editMxSetQty(si, ci, rawVal) {
-    editMxSet(si, ci, parseInt(rawVal, 10));
   }
 
   function editUpdateFooter() {
@@ -3662,10 +3763,12 @@
     openCart();
   }
 
-  // Escape cierra el modal que esté abierto (producto o editar pedido), sin interferir
-  // con otros overlays de la página.
+  // Escape cierra primero el popover de color si hay uno abierto; si no, cierra el
+  // modal (producto o editar pedido) sin interferir con otros overlays de la página.
   document.addEventListener('keydown', e => {
     if (e.key !== 'Escape') return;
+    if (mxControllers.pmodal && mxControllers.pmodal.closePopover()) return;
+    if (mxControllers.edit && mxControllers.edit.closePopover()) return;
     const em = document.getElementById('editModal');
     if (em && em.classList.contains('open')) { closeEditOrderModal(); return; }
     const pm = document.getElementById('pmodal');

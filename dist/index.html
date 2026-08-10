@@ -3400,13 +3400,20 @@
     };
   }
 
-  // Cierra el popover de color abierto si se toca fuera del picker
+  // Cierra el popover de color abierto si se toca fuera del picker. Usa composedPath()
+  // en vez de e.target/contains(): los propios handlers del picker (toggleChip,
+  // toggleColor, etc.) reconstruyen ese HTML en el momento del clic, así que el botón
+  // tocado queda desconectado del documento antes de que este listener corra — contains()
+  // daría "false" (fuera) para un clic que en realidad fue adentro, y cerraría el
+  // popover que se acababa de abrir. composedPath() se calcula al despachar el evento,
+  // antes de esa mutación, así que sigue incluyendo el picker aunque el nodo se reemplace.
   document.addEventListener('click', e => {
+    const path = e.composedPath ? e.composedPath() : [e.target];
     ['pmodal', 'edit'].forEach(prefix => {
       const ctl = mxControllers[prefix];
       if (!ctl || !ctl.isPopoverOpen()) return;
       const picker = document.getElementById(prefix + 'Picker');
-      if (picker && !picker.contains(e.target)) ctl.closePopover();
+      if (picker && !path.includes(picker)) ctl.closePopover();
     });
   });
 

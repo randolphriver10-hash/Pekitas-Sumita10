@@ -2439,6 +2439,26 @@
     return DEFAULT_PRODUCTS.filter(x => x.active !== false);
   }
 
+  // El admin carga los talles de un producto como una curva compacta ("6-16", "4-14"),
+  // no como talles sueltos — pero el cliente tiene que poder elegir un talle puntual
+  // (6, 8, 10...) para pedir colores distintos por talle. Acá se expande cada rango
+  // "X-Y" a los talles individuales de la curva (de a 2, como se venden en indumentaria
+  // infantil). Si un talle ya viene suelto ("Único", "S", "8"), se deja tal cual.
+  function expandSizes(sizes) {
+    const out = [];
+    (sizes || []).forEach(s => {
+      const raw = String(s || '').trim();
+      const m = raw.match(/^(\d+)\s*-\s*(\d+)$/);
+      if (!m) { if (raw) out.push(raw); return; }
+      const start = parseInt(m[1], 10), end = parseInt(m[2], 10);
+      if (isNaN(start) || isNaN(end) || start > end || (end - start) > 60) { out.push(raw); return; }
+      const step = (end - start) % 2 === 0 ? 2 : 1;
+      for (let n = start; n <= end; n += step) out.push(String(n));
+    });
+    return [...new Set(out)];
+  }
+  function productSizes(p) { return expandSizes(p && p.sizes); }
+
   function getAllCategories() {
     const c = window.PEKITAS_CATEGORIES;
     if (Array.isArray(c)) return c.filter(x => x.active !== false);
@@ -2545,7 +2565,7 @@
       ? allProducts.filter(p => p.category === currentCategoryFilter)
       : allProducts;
     const sizeOrder = ['RN','3M','6M','9M','12M','18M','24M','Único','2','3','4','6','8','10','12','14'];
-    const allSizes = [...new Set(filteredByCat.flatMap(p => (p.sizes || [])))].sort((a,b) => {
+    const allSizes = [...new Set(filteredByCat.flatMap(p => productSizes(p)))].sort((a,b) => {
       const ia = sizeOrder.indexOf(a), ib = sizeOrder.indexOf(b);
       if (ia>=0 && ib>=0) return ia-ib;
       if (ia>=0) return -1; if (ib>=0) return 1;
@@ -2566,7 +2586,7 @@
     if (clearBtn) clearBtn.style.display = hasActive ? 'inline-block' : 'none';
     let showing = currentCategoryFilter ? allProducts.filter(p => p.category === currentCategoryFilter) : allProducts;
     if (currentSubcatFilter) showing = showing.filter(p => (p.subcategory||'').toLowerCase() === currentSubcatFilter.toLowerCase());
-    if (currentSizeFilter) showing = showing.filter(p => (p.sizes||[]).includes(currentSizeFilter));
+    if (currentSizeFilter) showing = showing.filter(p => productSizes(p).includes(currentSizeFilter));
     if (countLabel) countLabel.textContent = hasActive ? `${showing.length} producto${showing.length !== 1 ? 's' : ''}` : '';
   }
 
@@ -2683,7 +2703,7 @@
       products = products.filter(p => (p.subcategory||'').toLowerCase() === currentSubcatFilter.toLowerCase());
     }
     if (currentSizeFilter) {
-      products = products.filter(p => (p.sizes || []).includes(currentSizeFilter));
+      products = products.filter(p => productSizes(p).includes(currentSizeFilter));
     }
     const grid = document.getElementById('productsGrid');
     if (!grid) return;
@@ -3180,7 +3200,7 @@
   function buildEmptyMatrix(p, existingLines) {
     const colorList = pmodalColorList(p);
     const matrix = {};
-    p.sizes.forEach(size => {
+    productSizes(p).forEach(size => {
       matrix[size] = {};
       colorList.forEach(color => {
         const existing = existingLines ? existingLines.find(v => v.selectedSize === size && (v.selectedColor||'') === color) : null;
@@ -3223,7 +3243,7 @@
   // vs. editar-pedido) para que no se pisen si en algún momento pudieran coexistir.
   function buildMatrixRowsHTML(p, matrix, idPrefix, changeFnName, setFnName) {
     const colorList = pmodalColorList(p);
-    return p.sizes.map((size, si) => `
+    return productSizes(p).map((size, si) => `
       <div class="mx-size-group">
         <div class="mx-size-label">Talle ${size}</div>
         ${colorList.map((c, ci) => {
@@ -3248,7 +3268,7 @@
     const p = getAllProducts().find(x => x.id === productId);
     if (!p) return;
     pmodalProduct = p;
-    const hasSizes = !!(p.sizes && p.sizes.length);
+    const hasSizes = productSizes(p).length > 0;
 
     if (hasSizes) {
       pmodalMatrix = buildEmptyMatrix(p, null);
@@ -3432,11 +3452,11 @@
     if (el) el.textContent = pmodalQty;
   }
 
-  // si/ci: índices dentro de pmodalProduct.sizes / pmodalColorList(pmodalProduct) — se
-  // resuelven acá para no tener que meter talles/colores con comillas dentro del HTML
+  // si/ci: índices dentro de productSizes(pmodalProduct) / pmodalColorList(pmodalProduct)
+  // — se resuelven acá para no tener que meter talles/colores con comillas en el HTML
   function pmodalMxResolve(si, ci) {
     const p = pmodalProduct;
-    const size = p.sizes[si];
+    const size = productSizes(p)[si];
     const color = pmodalColorList(p)[ci];
     return { size, color };
   }
@@ -3543,7 +3563,7 @@
 
     if (!p) {
       body.innerHTML = `<div class="mx-empty-state">No pudimos encontrar este producto. Puede que ya no esté disponible.</div>`;
-    } else if (!p.sizes || !p.sizes.length) {
+    } else if (!productSizes(p).length) {
       body.innerHTML = `<div class="mx-empty-state">Este producto no tiene talles configurados.</div>`;
     } else {
       editOrderProduct = p;
@@ -3588,7 +3608,7 @@
 
   function editMxResolve(si, ci) {
     const p = editOrderProduct;
-    return { size: p.sizes[si], color: pmodalColorList(p)[ci] };
+    return { size: productSizes(p)[si], color: pmodalColorList(p)[ci] };
   }
   function editMxSet(si, ci, qty) {
     const { size, color } = editMxResolve(si, ci);

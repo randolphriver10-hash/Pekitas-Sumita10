@@ -545,8 +545,9 @@
   .cart-item-variants { display: flex; align-items: center; gap: 7px; margin: 4px 0 3px; }
   .cart-variant-color { display: inline-block; width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid rgba(0,0,0,.12); flex-shrink: 0; }
   .cart-variant-size { font-size: 10px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; background: var(--cream-deep); color: var(--text-mid); padding: 1px 6px; border-radius: 4px; border: 1px solid var(--border-c); }
-  .cart-item-edit { display: inline-block; margin-top: 8px; background: none; border: none; padding: 0; cursor: pointer; font-family: var(--font-body); font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--text-mid); text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 3px; transition: color .2s; }
-  .cart-item-edit:hover { color: var(--text-dark); text-decoration-color: var(--taupe); }
+  .cart-item-edit { display: inline-flex; align-items: center; gap: 5px; margin-top: 9px; background: var(--cream-deep); border: 1px solid var(--border-c); border-radius: var(--rfull); padding: 5px 12px 5px 9px; cursor: pointer; font-family: var(--font-body); font-size: 10.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--text-dark); transition: all .2s var(--ease); }
+  .cart-item-edit:hover { background: var(--blush); border-color: var(--taupe); transform: translateY(-1px); }
+  .cart-item-edit svg { flex-shrink: 0; opacity: .75; }
 
   .cart-footer { padding: 26px 32px 34px; border-top: 1px solid var(--border-a); background: var(--warm-white); }
   .cart-subtotal { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 9px; }
@@ -903,25 +904,41 @@
   .pmodal-color-dot.is-out { opacity: .30; filter: grayscale(1); cursor: not-allowed; box-shadow: none; }
   .pmodal-color-dot.is-out::after { content: ''; position: absolute; inset: -2px; border-radius: 50%; background: linear-gradient(to top right, transparent calc(50% - 1px), rgba(60,50,42,.75) calc(50% - 1px), rgba(60,50,42,.75) calc(50% + 1px), transparent calc(50% + 1px)); }
 
-  .pmodal-sizes { display: flex; gap: 8px; flex-wrap: wrap; }
-  .pmodal-size-btn { min-width: 42px; height: 42px; padding: 0 13px; border: 1.5px solid var(--border-c); border-radius: var(--r2); background: none; cursor: pointer; font-family: var(--font-body); font-size: 13px; color: var(--text-dark); transition: all .18s; display: flex; align-items: center; justify-content: center; }
-  .pmodal-size-btn.active { background: var(--text-dark); color: #fff; border-color: var(--text-dark); }
-  .pmodal-size-btn:hover:not(.active) { border-color: var(--text-dark); transform: translateY(-1px); }
-
-  .pmodal-variants { display: flex; flex-direction: column; gap: 4px; }
-  .pmodal-variant-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border-a); flex-wrap: wrap; }
-  .pmodal-variant-row:last-child { border-bottom: none; }
-  .pmodal-variant-size { min-width: 34px; font-size: 13px; font-weight: 700; color: var(--text-dark); }
-  .pmodal-variant-colors { display: flex; gap: 7px; flex-wrap: wrap; flex: 1; min-width: 90px; }
-  .pmodal-variant-colors .pmodal-color-dot { width: 24px; height: 24px; }
-  .pmodal-variant-qty { display: flex; align-items: center; border: 1.5px solid var(--border-c); border-radius: var(--r2); overflow: hidden; flex-shrink: 0; }
-  .pmodal-variant-qty .pmodal-qty-btn { width: 32px; height: 32px; font-size: 15px; }
-  .pmodal-variant-qty .pmodal-qty-num { min-width: 18px; text-align: center; font-size: 13px; display: inline-block; }
-
   .pmodal-qty-wrap { display: flex; align-items: center; border: 1.5px solid var(--border-c); border-radius: var(--r2); width: fit-content; overflow: hidden; }
   .pmodal-qty-btn { width: 40px; height: 40px; border: none; background: none; cursor: pointer; font-size: 18px; color: var(--text-dark); display: flex; align-items: center; justify-content: center; transition: background .18s; }
-  .pmodal-qty-btn:hover { background: var(--cream-deep); }
+  .pmodal-qty-btn:hover:not(:disabled) { background: var(--cream-deep); }
+  .pmodal-qty-btn:disabled { opacity: .35; cursor: not-allowed; }
   .pmodal-qty-num { width: 44px; text-align: center; font-size: 15px; font-weight: 500; }
+
+  /* ── Matriz talle × color (editar/agregar pedido) ── */
+  .pmodal-matrix { display: flex; flex-direction: column; }
+  .pmodal-mx-size-group { padding: 14px 0; border-bottom: 1px solid var(--border-a); }
+  .pmodal-mx-size-group:last-child { border-bottom: none; }
+  .pmodal-mx-size-label { font-size: 13px; font-weight: 700; color: var(--text-dark); margin-bottom: 10px; }
+  .pmodal-mx-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px 0; flex-wrap: wrap; }
+  .pmodal-mx-row.is-out-row { opacity: .55; }
+  .pmodal-mx-color { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 90px; }
+  .pmodal-mx-swatch { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid rgba(0,0,0,.12); flex-shrink: 0; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+  .pmodal-mx-swatch.is-out { opacity: .35; filter: grayscale(1); }
+  .pmodal-mx-label { font-size: 12.5px; color: var(--text-mid); }
+  .pmodal-mx-qty { display: flex; align-items: center; border: 1.5px solid var(--border-c); border-radius: var(--r2); overflow: hidden; flex-shrink: 0; }
+  .pmodal-mx-qty .pmodal-qty-btn { width: 34px; height: 34px; font-size: 15px; }
+  .pmodal-mx-input { width: 40px; height: 34px; border: none; border-left: 1px solid var(--border-c); border-right: 1px solid var(--border-c); text-align: center; font-family: var(--font-body); font-size: 13px; color: var(--text-dark); background: none; -moz-appearance: textfield; }
+  .pmodal-mx-input::-webkit-outer-spin-button, .pmodal-mx-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .pmodal-mx-input:disabled { color: var(--text-light); }
+
+  .pmodal-mx-footer { position: sticky; bottom: 0; margin: 20px -30px -30px; padding: 16px 30px calc(16px + env(safe-area-inset-bottom)); background: rgba(254,252,249,.97); backdrop-filter: blur(14px); border-top: 1px solid var(--border-a); box-shadow: 0 -8px 24px rgba(26,22,18,.07); z-index: 8; }
+  .pmodal-mx-summary { min-height: 20px; margin-bottom: 12px; }
+  .pmodal-mx-summary-empty { font-size: 12.5px; color: var(--text-light); }
+  .pmodal-mx-summary-row { display: flex; gap: 8px; font-size: 12px; color: var(--text-mid); margin-bottom: 4px; flex-wrap: wrap; }
+  .pmodal-mx-summary-label { font-weight: 700; letter-spacing: .04em; text-transform: uppercase; font-size: 10px; color: var(--text-light); flex-shrink: 0; padding-top: 1px; }
+  .pmodal-mx-summary-colors { display: inline-flex; gap: 10px; flex-wrap: wrap; }
+  .pmodal-mx-summary-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; border: 1px solid rgba(0,0,0,.15); margin-right: 4px; vertical-align: -1px; }
+  .pmodal-mx-summary-totals { display: flex; justify-content: space-between; align-items: baseline; font-family: var(--font-display); font-size: 17px; color: var(--text-dark); margin-top: 8px; }
+  .pmodal-mx-actions { display: grid; grid-template-columns: auto 1fr; gap: 10px; }
+  .pmodal-btn-cancel { padding: 14px; border-radius: var(--r3); background: none; border: 1.5px solid var(--border-c); cursor: pointer; font-family: var(--font-body); font-size: 13px; font-weight: 500; color: var(--text-mid); transition: all .18s; }
+  .pmodal-btn-cancel:hover { border-color: var(--text-dark); color: var(--text-dark); }
+  .pmodal-mx-footer .pmodal-btn-ws { width: 100%; margin-top: 10px; }
 
   .pmodal-stock-info { font-size: 12px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; padding: 5px 13px; border-radius: var(--rfull); }
   .stock-ok  { background: #E8F5E9; color: #2E7D32; }
@@ -1344,8 +1361,7 @@
     /* Botones CTA más táctiles */
     .pmodal-btn-cart { padding: 18px; font-size: 15px; }
     .pmodal-btn-ws   { padding: 16px; }
-    /* Sizes y colors más grandes */
-    .pmodal-size-btn { min-width: 46px; height: 46px; font-size: 14px; }
+    /* Colors más grandes */
     .pmodal-color-dot { width: 34px; height: 34px; }
     /* Qty buttons más grandes */
     .pmodal-qty-btn { width: 46px; height: 46px; font-size: 20px; }
@@ -1354,6 +1370,12 @@
     .pmodal-header { padding: 16px 20px; }
     /* Padding del body */
     #pmodalBody { padding: 16px; }
+    /* Matriz talle × color: targets táctiles de 44px */
+    .pmodal-mx-footer { margin: 20px -16px -16px; padding: 14px 16px calc(14px + env(safe-area-inset-bottom)); }
+    .pmodal-mx-qty .pmodal-qty-btn { width: 42px; height: 42px; font-size: 17px; }
+    .pmodal-mx-input { width: 44px; height: 42px; font-size: 14px; }
+    .pmodal-mx-actions { grid-template-columns: 1fr; }
+    .pmodal-btn-cancel { order: 2; }
   }
 
   /* ══════════════════════════════════════════════════════════════
@@ -2830,7 +2852,7 @@
           <div class="cart-item-sub">${item.sub}</div>
           ${(item.selectedColor || item.selectedSize) ? `
           <div class="cart-item-variants">
-            ${item.selectedColor ? `<span class="cart-variant-color" style="background:${item.selectedColor}" title="${item.selectedColor}"></span>` : ''}
+            ${item.selectedColor ? `<span class="cart-variant-color" style="background:${item.selectedColor}" title="${hexToColorName(item.selectedColor)}"></span>` : ''}
             ${item.selectedSize  ? `<span class="cart-variant-size">${item.selectedSize}</span>` : ''}
           </div>` : ''}
           <div class="cart-item-controls">
@@ -2839,7 +2861,7 @@
             <button class="qty-btn" onclick="changeQty(${idx},1)">+</button>
           </div>
           <div class="cart-item-price">${formatPrice(item.price * item.qty)}</div>
-          <button class="cart-item-edit" onclick="editCartItem('${item.id}')">Editar pedido</button>
+          <button class="cart-item-edit" onclick="editCartItem('${item.id}')" aria-label="Editar pedido de ${item.name}"><svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>Editar pedido</button>
         </div>
         <button class="cart-item-remove" onclick="removeFromCart(${idx})" title="Eliminar"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
       </div>
@@ -2879,14 +2901,26 @@
   }
   function openCart() { renderCart(); document.getElementById('cartDrawer').classList.add('open'); document.getElementById('cartOverlay').classList.add('open'); document.body.style.overflow = 'hidden'; }
   function closeCart() { document.getElementById('cartDrawer').classList.remove('open'); document.getElementById('cartOverlay').classList.remove('open'); document.body.style.overflow = ''; }
+  // Agrupa las líneas del carrito por producto para que el pedido de WhatsApp refleje
+  // exactamente lo que el cliente eligió: cada talle/color/cantidad, sin resumir ni perder nada.
   function checkoutWhatsApp() {
     if (cart.length === 0) return;
     let msg = '¡Hola Pekitas Sumita! Quiero hacer el siguiente pedido:\n\n';
-    cart.forEach(item => {
-      const variant = [item.selectedColor ? 'Color: '+item.selectedColor : '', item.selectedSize ? 'Talle: '+item.selectedSize : ''].filter(Boolean).join(', ');
-      msg += `• ${item.name}${variant ? ' ('+variant+')' : ''} x ${item.qty} = ${formatPrice(item.price * item.qty)}\n`;
+    const productIds = [...new Set(cart.map(i => i.id))];
+    productIds.forEach(id => {
+      const lines = cart.filter(i => i.id === id);
+      const first = lines[0];
+      const productQty = lines.reduce((s,l) => s+l.qty, 0);
+      const productSubtotal = lines.reduce((s,l) => s + l.price*l.qty, 0);
+      msg += `• *${first.name}* (${formatPrice(first.price)} c/u)\n`;
+      lines.forEach(l => {
+        const variant = [l.selectedSize ? 'Talle '+l.selectedSize : '', l.selectedColor ? hexToColorName(l.selectedColor) : ''].filter(Boolean).join(' - ');
+        msg += `   - ${variant || 'Cantidad'}: x${l.qty} = ${formatPrice(l.price*l.qty)}\n`;
+      });
+      if (lines.length > 1) msg += `   Subtotal (${productQty} unidades): ${formatPrice(productSubtotal)}\n`;
+      msg += '\n';
     });
-    msg += `\n *Total: ${formatPrice(getTotal())}*`;
+    msg += `*Total: ${formatPrice(getTotal())}*`;
     msg += '\n\n¿Podrían confirmar disponibilidad y forma de envío? ¡Gracias!';
     const ws = (window.PEKITAS_SETTINGS || {}).whatsappNumber || WHATSAPP_NUMBER;
     window.open(`https://wa.me/${ws}?text=${encodeURIComponent(msg)}`, '_blank');
@@ -3033,14 +3067,69 @@
   }
 
   // ─── PRODUCT MODAL ────────────────────────────────────────────────────────────
-  let pmodalProduct = null, pmodalQty = 1, pmodalSelectedColor = null, pmodalSelectedSize = null;
-  let pmodalMultiVariants = null, pmodalEditMode = false;
+  // pmodalMatrix: { [talle]: { [color]: cantidad } } — color usa '' como clave cuando
+  // el producto no maneja colores ("Color único"). Es la fuente de verdad mientras el
+  // modal está abierto; se lee recién al guardar, nunca se re-renderiza entero por tecla.
+  let pmodalProduct = null, pmodalQty = 1, pmodalSelectedColor = null;
+  let pmodalMatrix = null, pmodalEditMode = false;
+
+  // Traduce un hex a un nombre de color legible para que el mensaje de WhatsApp diga
+  // "Color: Rosa" en vez de "Color: #FFBCE4" — el vendedor tiene que poder leerlo sin ambigüedad.
+  function hexToColorName(color) {
+    const raw = String(color || '').trim();
+    if (!raw) return '';
+    if (!raw.startsWith('#')) return raw;
+    const exact = {
+      '#ffffff':'Blanco','#000000':'Negro','#0c6b34':'Verde',
+      '#5e4438':'Marrón','#775849':'Marrón','#7a4c84':'Violeta',
+      '#8c6654':'Marrón','#9a7964':'Marrón claro','#b086ec':'Violeta',
+      '#b49180':'Marrón claro','#b5c9dd':'Celeste','#c4b5a5':'Beige',
+      '#c6a4dd':'Lila','#c6b5ae':'Beige rosado','#d4c4b3':'Beige',
+      '#d8e3d8':'Verde claro','#dab0c4':'Rosa viejo','#e3d3cc':'Beige rosado',
+      '#ecd8cd':'Rosa viejo','#ecdcea':'Lila claro','#f1d2bb':'Rosa nude',
+      '#f2e4dc':'Rosa claro','#f5eadb':'Crudo','#fad4ff':'Lila rosado',
+      '#faf5f0':'Crudo','#fcc6c6':'Rosa claro','#fcebe3':'Crudo rosado',
+      '#ffa883':'Coral','#ffbce4':'Rosa','#ffbea3':'Durazno',
+      '#ffc7af':'Coral claro','#ffcd9e':'Durazno','#ffeaff':'Lila claro',
+      '#ffece1':'Durazno claro','#ffece3':'Rosa claro','#fff1eb':'Crudo rosado'
+    };
+    const hex = raw.toLowerCase();
+    if (exact[hex]) return exact[hex];
+    const fullHex = hex.length === 4 ? `#${hex[1]}${hex[1]}${hex[2]}${hex[2]}${hex[3]}${hex[3]}` : hex;
+    const match = fullHex.match(/^#([0-9a-f]{6})$/);
+    if (!match) return raw.replace('#', '');
+    const r = parseInt(match[1].slice(0,2),16)/255, g = parseInt(match[1].slice(2,4),16)/255, b = parseInt(match[1].slice(4,6),16)/255;
+    const max = Math.max(r,g,b), min = Math.min(r,g,b), light = (max+min)/2;
+    const sat = max===min ? 0 : (max-min)/(1-Math.abs(2*light-1));
+    let hue = 0;
+    if (max !== min) {
+      if (max===r) hue = ((g-b)/(max-min) + (g<b?6:0)) * 60;
+      else if (max===g) hue = ((b-r)/(max-min) + 2) * 60;
+      else hue = ((r-g)/(max-min) + 4) * 60;
+    }
+    if (sat < 0.12) {
+      if (light > 0.92) return 'Blanco';
+      if (light > 0.78) return 'Gris claro';
+      if (light < 0.18) return 'Negro';
+      return 'Gris';
+    }
+    if (hue < 12 || hue >= 345) return light > 0.75 ? 'Rosa claro' : 'Rojo';
+    if (hue < 35) return light < 0.5 ? 'Marrón' : 'Coral';
+    if (hue < 55) return light < 0.62 ? 'Marrón claro' : 'Beige';
+    if (hue < 75) return 'Amarillo';
+    if (hue < 165) return light > 0.75 ? 'Verde claro' : 'Verde';
+    if (hue < 205) return 'Celeste';
+    if (hue < 255) return 'Azul';
+    if (hue < 295) return light > 0.7 ? 'Lila' : 'Violeta';
+    return light > 0.75 ? 'Rosa claro' : 'Rosa';
+  }
 
   function isColorOut(p, color) { return (p.soldOutColors || []).includes(color); }
   function firstAvailableColor(p) {
     const cs = p.colors || [];
     return cs.find(c => !isColorOut(p, c)) || cs[0] || null;
   }
+  function pmodalColorList(p) { return (p.colors && p.colors.length) ? p.colors : ['']; }
 
   // editVariants: líneas ya existentes en el carrito para este producto (modo "Editar pedido")
   function openProductModal(productId, editVariants) {
@@ -3048,22 +3137,25 @@
     if (!p) return;
     pmodalProduct = p;
     pmodalEditMode = !!(editVariants && editVariants.length);
-    const isMulti = (p.sizes && p.sizes.length > 1);
+    const hasSizes = !!(p.sizes && p.sizes.length);
 
-    if (isMulti) {
-      pmodalMultiVariants = p.sizes.map(size => {
-        const existing = pmodalEditMode ? editVariants.find(v => v.selectedSize === size) : null;
-        return { size, color: existing ? existing.selectedColor : firstAvailableColor(p), qty: existing ? existing.qty : 0 };
+    if (hasSizes) {
+      const colorList = pmodalColorList(p);
+      pmodalMatrix = {};
+      p.sizes.forEach(size => {
+        pmodalMatrix[size] = {};
+        colorList.forEach(color => {
+          const existing = pmodalEditMode ? editVariants.find(v => v.selectedSize === size && (v.selectedColor||'') === color) : null;
+          pmodalMatrix[size][color] = existing ? existing.qty : 0;
+        });
       });
       pmodalQty = 1;
       pmodalSelectedColor = null;
-      pmodalSelectedSize = null;
     } else {
-      pmodalMultiVariants = null;
+      pmodalMatrix = null;
       const existing = pmodalEditMode ? editVariants[0] : null;
       pmodalQty = existing ? existing.qty : 1;
       pmodalSelectedColor = existing ? existing.selectedColor : firstAvailableColor(p);
-      pmodalSelectedSize  = (p.sizes  && p.sizes.length)  ? p.sizes[0]  : null;
     }
 
     const allTags      = window.PEKITAS_TAGS || [];
@@ -3102,22 +3194,49 @@
       return `<div class="pmodal-color-dot ${(!out && isActive) ? 'active' : ''} ${out ? 'is-out' : ''}" style="background:${c}" title="${out ? 'Agotado - ' : ''}${c}" ${out ? '' : `onclick="${onclickFn}"`}></div>`;
     };
 
-    const colorsHTML = (!isMulti && p.colors && p.colors.length) ? `<div><div class="pmodal-section-label">Color</div><div class="pmodal-colors">${p.colors.map(c => colorDotHTML(c, c===pmodalSelectedColor, `pmodalSetColor('${c.replace(/'/g,"\'")}')`)).join('')}</div></div>` : '';
+    // Fallback sin talles (raro: producto sin sizes cargados) — solo color simple + cantidad, sin matriz
+    const colorsHTML = (!hasSizes && p.colors && p.colors.length) ? `<div><div class="pmodal-section-label">Color</div><div class="pmodal-colors">${p.colors.map(c => colorDotHTML(c, c===pmodalSelectedColor, `pmodalSetColor('${c.replace(/'/g,"\'")}')`)).join('')}</div></div>` : '';
 
-    const sizesHTML = (!isMulti && p.sizes && p.sizes.length) ? `<div><div class="pmodal-section-label">Talle</div><div class="pmodal-sizes">${p.sizes.map(s => `<button class="pmodal-size-btn ${s===pmodalSelectedSize?'active':''}" onclick="pmodalSetSize('${s.replace(/'/g,"\'")}')">${s}</button>`).join('')}</div></div>` : '';
-
-    const variantsHTML = isMulti ? `<div><div class="pmodal-section-label">Elegí color y cantidad por talle</div><div class="pmodal-variants">${pmodalMultiVariants.map((v,vi) => `
-      <div class="pmodal-variant-row">
-        <span class="pmodal-variant-size">${v.size}</span>
-        <div class="pmodal-variant-colors">${(p.colors||[]).map(c => colorDotHTML(c, c===v.color, `pmodalVariantSetColor(${vi},'${c.replace(/'/g,"\'")}')`)).join('')}</div>
-        <div class="pmodal-variant-qty">
-          <button class="pmodal-qty-btn" onclick="pmodalVariantChangeQty(${vi},-1)">-</button>
-          <span class="pmodal-qty-num" id="pmodalVQty-${vi}">${v.qty}</span>
-          <button class="pmodal-qty-btn" onclick="pmodalVariantChangeQty(${vi},1)">+</button>
-        </div>
+    const colorList = pmodalColorList(p);
+    const matrixHTML = hasSizes ? `<div><div class="pmodal-section-label">Elegí color y cantidad por talle</div><div class="pmodal-matrix" id="pmodalMatrixWrap">${p.sizes.map((size,si) => `
+      <div class="pmodal-mx-size-group">
+        <div class="pmodal-mx-size-label">Talle ${size}</div>
+        ${colorList.map((c,ci) => {
+          const out = c && isColorOut(p, c);
+          const qty = pmodalMatrix[size][c];
+          const swatch = c ? `<span class="pmodal-mx-swatch ${out?'is-out':''}" style="background:${c}" title="${out?'Agotado - ':''}${c}"></span>` : '';
+          const label = c ? '' : '<span class="pmodal-mx-label">Color único</span>';
+          const aria = `talle ${size}${c?' color '+c:''}`;
+          return `<div class="pmodal-mx-row ${out?'is-out-row':''}">
+            <div class="pmodal-mx-color">${swatch}${label}</div>
+            <div class="pmodal-mx-qty">
+              <button class="pmodal-qty-btn" type="button" aria-label="Restar unidad, ${aria}" ${out?'disabled':''} onclick="pmodalMxChangeQty(${si},${ci},-1)">-</button>
+              <input class="pmodal-mx-input" id="mxq-${si}-${ci}" type="number" min="0" inputmode="numeric" aria-label="Cantidad, ${aria}" value="${qty}" ${out?'disabled':''} onchange="pmodalMxSetQty(${si},${ci},this.value)">
+              <button class="pmodal-qty-btn" type="button" aria-label="Sumar unidad, ${aria}" ${out?'disabled':''} onclick="pmodalMxChangeQty(${si},${ci},1)">+</button>
+            </div>
+          </div>`;
+        }).join('')}
       </div>`).join('')}</div></div>` : '';
 
     const wsBtn = wsNumber ? `<button class="pmodal-btn-ws" onclick="pmodalConsultarWS()"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.118 1.523 5.85L.054 23.454a.5.5 0 0 0 .61.61l5.604-1.469A11.952 11.952 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22a9.951 9.951 0 0 1-5.16-1.436l-.369-.221-3.824 1.003 1.02-3.73-.242-.383A9.951 9.951 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg> Consultar por WhatsApp</button>` : '';
+
+    const ctaLabel = pmodalEditMode ? 'Guardar cambios' : 'Agregar al carrito';
+    const cartBtnHTML = `<button class="pmodal-btn-cart" id="pmodalCartBtn" onclick="pmodalAddToCart()" ${stockOut?'disabled style="opacity:.5;cursor:not-allowed"':''}>
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display:inline;vertical-align:middle;margin-right:8px"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+      ${ctaLabel}
+    </button>`;
+
+    // En modo matriz el resumen + acciones quedan pegados abajo (sticky) mientras se
+    // scrollea la lista de talles/colores, que puede ser larga.
+    const matrixFooterHTML = hasSizes ? `
+      <div class="pmodal-mx-footer">
+        <div class="pmodal-mx-summary" id="pmodalMxSummary"></div>
+        <div class="pmodal-mx-actions">
+          <button class="pmodal-btn-cancel" type="button" onclick="closeProductModal()">Cancelar</button>
+          ${cartBtnHTML}
+        </div>
+        ${wsBtn}
+      </div>` : '';
 
     document.getElementById('pmodalBody').innerHTML = `
       <div class="pmodal-layout">
@@ -3133,9 +3252,8 @@
             ${discount ? `<span class="pmodal-badge-inline">-${discount}%</span>` : (p.badge ? `<span class="pmodal-badge-inline">${p.badge}</span>` : '')}
           </div>
           ${colorsHTML}
-          ${sizesHTML}
-          ${variantsHTML}
-          ${isMulti ? '' : `<div>
+          ${matrixHTML}
+          ${hasSizes ? '' : `<div>
             <div class="pmodal-section-label">Cantidad</div>
             <div class="pmodal-qty-wrap">
               <button class="pmodal-qty-btn" onclick="pmodalChangeQty(-1)">-</button>
@@ -3144,13 +3262,7 @@
             </div>
           </div>`}
           <span class="pmodal-stock-info ${stockClass}">${stockText}</span>
-          <div class="pmodal-cta-wrap">
-            <button class="pmodal-btn-cart" id="pmodalCartBtn" onclick="pmodalAddToCart()" ${stockOut?'disabled style="opacity:.5;cursor:not-allowed"':''}>
-              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display:inline;vertical-align:middle;margin-right:8px"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-              ${pmodalEditMode ? 'Guardar cambios' : 'Agregar al carrito'}
-            </button>
-            ${wsBtn}
-          </div>
+          ${hasSizes ? '' : `<div class="pmodal-cta-wrap">${cartBtnHTML}${wsBtn}</div>`}
           <div class="pmodal-shipping">
             <div class="pmodal-ship-item">${freeShipping ? ' <strong>Envío gratis</strong> en esta compra' : ' Envíos a todo el país'}</div>
             <div class="pmodal-ship-item"> Compra 100% protegida</div>
@@ -3159,8 +3271,11 @@
         </div>
       </div>
       ${p.description ? `<div class="pmodal-description"><h3 class="pmodal-desc-title">Descripción</h3><p class="pmodal-desc-text">${p.description}</p></div>` : ''}
+      ${matrixFooterHTML}
     `;
 
+    if (hasSizes) pmodalUpdateFooter();
+    document.getElementById('pmodal').setAttribute('aria-label', 'Detalle de ' + p.name);
     document.getElementById('pmodalOverlay').classList.add('open');
     document.getElementById('pmodal').classList.add('open');
     document.body.style.overflow = 'hidden';
@@ -3204,7 +3319,7 @@
     document.getElementById('pmodal').classList.remove('open');
     document.body.style.overflow = '';
     pmodalProduct = null;
-    pmodalMultiVariants = null;
+    pmodalMatrix = null;
     pmodalEditMode = false;
     const wrap = document.querySelector('.pmodal-main-img');
     if (wrap) { wrap._swipeInit = false; }
@@ -3229,13 +3344,6 @@
     });
   }
 
-  function pmodalSetSize(size) {
-    pmodalSelectedSize = size;
-    document.querySelectorAll('.pmodal-size-btn').forEach(b => {
-      b.classList.toggle('active', b.textContent.trim() === String(size));
-    });
-  }
-
   function pmodalChangeQty(delta) {
     const max = pmodalProduct?.stock || 99;
     pmodalQty = Math.max(1, Math.min(max, pmodalQty + delta));
@@ -3243,25 +3351,67 @@
     if (el) el.textContent = pmodalQty;
   }
 
-  function pmodalVariantSetColor(vi, color) {
-    if (!pmodalMultiVariants || !pmodalMultiVariants[vi]) return;
-    pmodalMultiVariants[vi].color = color;
-    const row = document.querySelectorAll('.pmodal-variant-row')[vi];
-    if (row) row.querySelectorAll('.pmodal-color-dot').forEach(d => {
-      d.classList.toggle('active', !d.classList.contains('is-out') && d.title === color);
-    });
+  // si/ci: índices dentro de pmodalProduct.sizes / pmodalColorList(pmodalProduct) — se
+  // resuelven acá para no tener que meter talles/colores con comillas dentro del HTML
+  function pmodalMxResolve(si, ci) {
+    const p = pmodalProduct;
+    const size = p.sizes[si];
+    const color = pmodalColorList(p)[ci];
+    return { size, color };
+  }
+  function pmodalMxSet(si, ci, qty) {
+    const { size, color } = pmodalMxResolve(si, ci);
+    if (!pmodalMatrix || !pmodalMatrix[size]) return;
+    const max = pmodalProduct?.stock || 99;
+    qty = Math.max(0, Math.min(max, Math.floor(qty) || 0));
+    pmodalMatrix[size][color] = qty;
+    const input = document.getElementById('mxq-' + si + '-' + ci);
+    if (input) input.value = qty;
+    pmodalUpdateFooter();
+  }
+  function pmodalMxChangeQty(si, ci, delta) {
+    const { size, color } = pmodalMxResolve(si, ci);
+    pmodalMxSet(si, ci, (pmodalMatrix[size][color] || 0) + delta);
+  }
+  function pmodalMxSetQty(si, ci, rawVal) {
+    pmodalMxSet(si, ci, parseInt(rawVal, 10));
   }
 
-  function pmodalVariantChangeQty(vi, delta) {
-    if (!pmodalMultiVariants || !pmodalMultiVariants[vi]) return;
-    const max = pmodalProduct?.stock || 99;
-    const v = pmodalMultiVariants[vi];
-    v.qty = Math.max(0, Math.min(max, v.qty + delta));
-    const el = document.getElementById('pmodalVQty-' + vi);
-    if (el) el.textContent = v.qty;
+  // Recalcula "Por talle" / "Por color" / total / subtotal y habilita el CTA solo si hay
+  // al menos una unidad elegida. Nunca re-renderiza la matriz entera (perdería el foco
+  // del input que el cliente está tocando).
+  function pmodalUpdateFooter() {
+    if (!pmodalMatrix || !pmodalProduct) return;
+    const p = pmodalProduct;
+    const bySize = [], byColor = {};
+    let totalQty = 0;
+    Object.keys(pmodalMatrix).forEach(size => {
+      let sizeQty = 0;
+      Object.keys(pmodalMatrix[size]).forEach(color => {
+        const q = pmodalMatrix[size][color];
+        if (q > 0) {
+          sizeQty += q;
+          if (color) byColor[color] = (byColor[color] || 0) + q;
+          totalQty += q;
+        }
+      });
+      if (sizeQty > 0) bySize.push(`Talle ${size}: ${sizeQty}`);
+    });
+    const byColorParts = Object.keys(byColor).map(c => {
+      const swatch = `<span class="pmodal-mx-summary-dot" style="background:${c}"></span>`;
+      return `${swatch}${byColor[c]}`;
+    });
+    const summary = document.getElementById('pmodalMxSummary');
+    if (summary) {
+      summary.innerHTML = totalQty === 0
+        ? `<div class="pmodal-mx-summary-empty">Elegí al menos un talle y cantidad</div>`
+        : `
+        <div class="pmodal-mx-summary-row"><span class="pmodal-mx-summary-label">Por talle</span><span class="pmodal-mx-summary-val">${bySize.join(' · ')}</span></div>
+        ${byColorParts.length ? `<div class="pmodal-mx-summary-row"><span class="pmodal-mx-summary-label">Por color</span><span class="pmodal-mx-summary-val pmodal-mx-summary-colors">${byColorParts.join('')}</span></div>` : ''}
+        <div class="pmodal-mx-summary-totals"><span>${totalQty} unidad${totalQty===1?'':'es'}</span><strong>${formatPrice(totalQty * p.price)}</strong></div>`;
+    }
     const btn = document.getElementById('pmodalCartBtn');
-    const totalQty = pmodalMultiVariants.reduce((s, x) => s + x.qty, 0);
-    if (btn) btn.disabled = totalQty === 0;
+    if (btn) btn.disabled = totalQty === 0 || (p.soldOut) || !(p.stock || 0);
   }
 
   function pmodalAddToCart() {
@@ -3272,16 +3422,22 @@
     if (stockNum === 0) return; // out of stock
 
     let lines;
-    if (pmodalMultiVariants) {
-      lines = pmodalMultiVariants.filter(v => v.qty > 0).map(v => ({
-        id:p.id, name:p.name, price:p.price, sub:p.sub||p.category||'', img:p.img||'',
-        selectedColor: v.color || null, selectedSize: v.size || null, qty: v.qty
-      }));
+    if (pmodalMatrix) {
+      lines = [];
+      Object.keys(pmodalMatrix).forEach(size => {
+        Object.keys(pmodalMatrix[size]).forEach(color => {
+          const qty = pmodalMatrix[size][color];
+          if (qty > 0) lines.push({
+            id:p.id, name:p.name, price:p.price, sub:p.sub||p.category||'', img:p.img||'',
+            selectedColor: color || null, selectedSize: size || null, qty
+          });
+        });
+      });
       if (!lines.length) return;
     } else {
       lines = [{
         id:p.id, name:p.name, price:p.price, sub:p.sub||p.category||'', img:p.img||'',
-        selectedColor: pmodalSelectedColor || null, selectedSize: pmodalSelectedSize || null, qty: pmodalQty || 1
+        selectedColor: pmodalSelectedColor || null, selectedSize: null, qty: pmodalQty || 1
       }];
     }
 
@@ -3309,18 +3465,28 @@
     const ws = (window.PEKITAS_SETTINGS||{}).whatsappNumber || '';
     if (!ws) return;
     let extra;
-    if (pmodalMultiVariants) {
-      extra = pmodalMultiVariants.filter(v => v.qty > 0)
-        .map(v => `Talle ${v.size}${v.color ? ' (Color: '+v.color+')' : ''} x${v.qty}`).join(', ');
+    if (pmodalMatrix) {
+      const parts = [];
+      Object.keys(pmodalMatrix).forEach(size => {
+        Object.keys(pmodalMatrix[size]).forEach(color => {
+          const qty = pmodalMatrix[size][color];
+          if (qty > 0) parts.push(`Talle ${size}${color ? ' (Color: '+hexToColorName(color)+')' : ''} x${qty}`);
+        });
+      });
+      extra = parts.join(', ');
     } else {
-      extra = [
-        pmodalSelectedColor ? 'Color: '+pmodalSelectedColor : '',
-        pmodalSelectedSize  ? 'Talle: '+pmodalSelectedSize  : '',
-      ].filter(Boolean).join(', ');
+      extra = pmodalSelectedColor ? 'Color: '+hexToColorName(pmodalSelectedColor) : '';
     }
     const msg = encodeURIComponent('Hola! Me interesa: ' + pmodalProduct.name + ' (' + formatPrice(pmodalProduct.price) + ')' + (extra ? '. ' + extra : '') + '.');
     window.open('https://wa.me/' + ws + '?text=' + msg, '_blank');
   }
+
+  // Escape cierra el modal de producto si está abierto (y no interfiere con otros overlays)
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    const pm = document.getElementById('pmodal');
+    if (pm && pm.classList.contains('open')) closeProductModal();
+  });
 
   // ─── INIT — carga en vivo desde la API cuando corre en localhost ────────────
 

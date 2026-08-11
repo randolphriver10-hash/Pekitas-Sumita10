@@ -928,6 +928,27 @@
   .pmodal-gallery { display: flex; flex-direction: column; gap: 11px; }
   .pmodal-main-img { aspect-ratio: 4/5; overflow: hidden; border-radius: var(--r4); background: var(--cream-dark); position: relative; box-shadow: var(--sh-sm); }
   .pmodal-main-img img { width: 100%; height: 100%; object-fit: cover; transition: opacity .22s; }
+
+  /* ── Zoom al pasar el mouse (como Mercado Libre): lupa sobre la foto + panel ampliado
+     al costado. display:none por defecto, el JS los muestra solo con mouse real y espacio
+     suficiente (pmodalInitZoom en el <script> del modal de producto). ── */
+  .pmodal-zoom-lens {
+    display: none; position: absolute; width: 150px; height: 150px;
+    background: rgba(255,255,255,.32); border: 1px solid rgba(255,255,255,.85);
+    box-shadow: 0 0 0 1px rgba(0,0,0,.12); pointer-events: none; z-index: 2;
+  }
+  /* position:fixed a propósito (no absolute): #pmodal tiene overflow-y:auto, y por regla
+     de CSS eso fuerza overflow-x a "auto" también en el mismo elemento aunque no se declare
+     explícito — cualquier cosa position:absolute que sobresalga del layout quedaba recortada
+     e invisible. fixed no respeta el overflow de ancestros (sin transform de por medio) y
+     se posiciona en JS con coordenadas de viewport (getBoundingClientRect), así que escapa
+     ese recorte sin tener que tocar el overflow de #pmodal (que sí necesita clip vertical). */
+  .pmodal-zoom-pane {
+    display: none; position: fixed; left: 0; top: 0;
+    width: 420px; height: 480px; max-height: 70vh;
+    background-color: var(--warm-white); background-repeat: no-repeat;
+    border-radius: var(--r4); box-shadow: var(--sh-xl); z-index: 500; pointer-events: none;
+  }
   .pmodal-thumbs { display: flex; gap: 8px; flex-wrap: wrap; }
   .pmodal-thumb { width: 64px; height: 64px; border-radius: var(--r2); overflow: hidden; border: 2px solid transparent; cursor: pointer; transition: border-color .18s, transform .22s var(--spring); background: var(--cream-dark); flex-shrink: 0; }
   .pmodal-thumb:hover { transform: scale(1.07); }
@@ -3559,11 +3580,13 @@
 
     const galleryHTML = `
       <div class="pmodal-gallery">
-        <div class="pmodal-main-img">
+        <div class="pmodal-main-img" id="pmodalMainImgWrap">
           <img src="${imgs[0] || ''}" alt="${p.name}" id="pmodalMainImg"
                onerror="this.parentElement.style.background='linear-gradient(145deg,#F2E4DC,#D8E4D8)';this.style.display='none'">
+          <div class="pmodal-zoom-lens" id="pmodalZoomLens"></div>
           ${soldOutBannerHTML}
         </div>
+        <div class="pmodal-zoom-pane" id="pmodalZoomPane"></div>
         ${imgs.length > 1 ? `<div class="pmodal-thumbs">${imgs.map((img,idx) => `<div class="pmodal-thumb ${idx===0?'active':''}" onclick="pmodalSetMainImg('${img.replace(/'/g,"\'") }',this)"><img src="${img}" alt="${p.name}"></div>`).join('')}</div>` : ''}
       </div>`;
 
@@ -3645,6 +3668,8 @@
     document.body.classList.add('product-page-open');
     document.getElementById('pmodal').scrollTop = 0;
     updateProductPageMeta(p);
+    pmodalInitZoom();
+    pmodalGalleryStart();
     if (!opts.skipHistory) {
       const url = productUrl(p);
       if (window.location.pathname !== url) history.pushState({ pekitasProductId: p.id }, '', url);
@@ -3694,6 +3719,7 @@
     const wrap = document.querySelector('.pmodal-main-img');
     if (wrap) { wrap._swipeInit = false; }
     clearProductPageMeta();
+    pmodalGalleryStop();
   }
 
   // Botón "Volver"/"Cancelar" dentro de la página de producto: si llegamos ahí desde
@@ -3710,7 +3736,7 @@
     }
   }
 
-  function pmodalSetMainImg(src, el) {
+  function pmodalSetMainImg(src, el, isManual) {
     const img = document.getElementById('pmodalMainImg');
     if (img) { img.style.opacity='0'; setTimeout(()=>{ img.src=src; img.style.opacity='1'; },150); }
     document.querySelectorAll('.pmodal-thumb').forEach(t => t.classList.remove('active'));
@@ -3720,6 +3746,97 @@
       img.style.transform = 'scale(1)';
       img.style.transformOrigin = '50% 50%';
     }
+    // Click en una miniatura = navegación manual: pausa el auto-slide de la galería un
+    // rato (mismo patrón que el carrusel del hero), no lo desactiva.
+    if (isManual !== false) pmodalGalleryAfterManualNav();
+  }
+
+  // ─── Auto-slide de la galería del producto: mismo patrón que el carrusel del hero —
+  // cicla indefinidamente entre todas las fotos, una interacción manual (miniatura, zoom
+  // hover) lo pausa un rato y después retoma solo, nunca se desactiva del todo. ──────────
+  let pmodalGalleryTimer = null;
+  let pmodalGalleryPaused = false;
+  let pmodalGalleryResumeTimeout = null;
+  const PMODAL_GALLERY_INTERVAL = 3200;
+
+  function pmodalGalleryTick() {
+    if (pmodalGalleryPaused || document.hidden) return;
+    const zoomOverlay = document.getElementById('imgZoomOverlay');
+    if (zoomOverlay && zoomOverlay.classList.contains('open')) return;
+    const thumbs = Array.from(document.querySelectorAll('.pmodal-thumb'));
+    if (thumbs.length < 2) return;
+    const activeIdx = thumbs.findIndex(t => t.classList.contains('active'));
+    const next = thumbs[(activeIdx + 1) % thumbs.length];
+    const img = next.querySelector('img');
+    if (img) pmodalSetMainImg(img.src, next, false);
+  }
+  function pmodalGalleryStart() {
+    clearInterval(pmodalGalleryTimer);
+    pmodalGalleryTimer = null;
+    pmodalGalleryPaused = false;
+    if (document.querySelectorAll('.pmodal-thumb').length < 2) return;
+    pmodalGalleryTimer = setInterval(pmodalGalleryTick, PMODAL_GALLERY_INTERVAL);
+  }
+  function pmodalGalleryStop() {
+    clearInterval(pmodalGalleryTimer);
+    pmodalGalleryTimer = null;
+    clearTimeout(pmodalGalleryResumeTimeout);
+  }
+  function pmodalGalleryAfterManualNav() {
+    pmodalGalleryPaused = true;
+    clearTimeout(pmodalGalleryResumeTimeout);
+    pmodalGalleryResumeTimeout = setTimeout(function(){ pmodalGalleryPaused = false; }, PMODAL_GALLERY_INTERVAL);
+  }
+
+  // ─── Zoom al pasar el mouse por la foto principal (como en Mercado Libre): una lupa
+  // sigue el cursor y un panel al costado muestra el detalle ampliado. Solo en desktop con
+  // mouse real — en mobile el zoom ya existe por pellizco/doble-toque al tocar la foto
+  // (abre el lightbox de pantalla completa, más apropiado para touch). ──────────────────
+  function pmodalInitZoom() {
+    const wrap = document.getElementById('pmodalMainImgWrap');
+    const lens = document.getElementById('pmodalZoomLens');
+    const pane = document.getElementById('pmodalZoomPane');
+    const img  = document.getElementById('pmodalMainImg');
+    if (!wrap || !lens || !pane || !img) return;
+    if (!(window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches)) return;
+
+    const ZOOM = 2.4;
+
+    function deactivate() {
+      lens.style.display = 'none';
+      pane.style.display = 'none';
+      pmodalGalleryPaused = false;
+    }
+    function move(e) {
+      const rect = wrap.getBoundingClientRect();
+      const paneW = pane.offsetWidth || 420, paneH = pane.offsetHeight || 480;
+      const fitsBesideImage = rect.width >= 200 && (window.innerWidth - rect.right - 18) >= (paneW + 12);
+      if (!fitsBesideImage) { deactivate(); return; } // no hay lugar a la derecha: no mostrar el panel
+
+      lens.style.display = 'block';
+      pane.style.display = 'block';
+      pmodalGalleryPaused = true;
+
+      let x = e.clientX - rect.left;
+      let y = e.clientY - rect.top;
+      x = Math.max(0, Math.min(rect.width, x));
+      y = Math.max(0, Math.min(rect.height, y));
+      const lensW = lens.offsetWidth, lensH = lens.offsetHeight;
+      lens.style.left = Math.max(0, Math.min(rect.width - lensW, x - lensW / 2)) + 'px';
+      lens.style.top  = Math.max(0, Math.min(rect.height - lensH, y - lensH / 2)) + 'px';
+
+      // pane es position:fixed -> coordenadas de viewport, pegado a la derecha de la foto,
+      // clampeado para no salirse abajo de la pantalla.
+      pane.style.left = (rect.right + 18) + 'px';
+      pane.style.top = Math.max(8, Math.min(window.innerHeight - paneH - 8, rect.top)) + 'px';
+
+      pane.style.backgroundImage = 'url(' + img.src + ')';
+      pane.style.backgroundSize = (rect.width * ZOOM) + 'px ' + (rect.height * ZOOM) + 'px';
+      pane.style.backgroundPosition = (-(x * ZOOM) + paneW / 2) + 'px ' + (-(y * ZOOM) + paneH / 2) + 'px';
+    }
+
+    wrap.addEventListener('mousemove', move);
+    wrap.addEventListener('mouseleave', deactivate);
   }
 
   function pmodalSetColor(color) {

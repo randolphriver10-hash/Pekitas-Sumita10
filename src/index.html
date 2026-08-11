@@ -858,10 +858,10 @@
 
   #pmodal { position: fixed; inset: 0; width: 100%; height: 100dvh; background: var(--warm-white); z-index: 201; overflow-y: auto; opacity: 0; transform: translateY(18px); pointer-events: none; transition: opacity .32s var(--ease), transform .32s var(--ease); }
   #pmodal.open { opacity: 1; transform: translateY(0); pointer-events: auto; }
-  /* Los flotantes de la home (WhatsApp, volver arriba) quedaban por encima de la página
-     de producto (mismo z-index que tenían sobre el modal viejo) y ahora chocan visualmente
-     con su footer sticky de carrito — se ocultan mientras la página de producto está abierta. */
-  body.product-page-open .wa-float-btn,
+  /* "Volver arriba" quedaba por encima de la página de producto (mismo z-index que tenía
+     sobre el modal viejo) — se oculta mientras esa página está abierta. El flotante de
+     WhatsApp SÍ se mantiene visible ahí a propósito (pedido explícito): es la única forma
+     de contactar por WhatsApp desde la página de producto, ya no hay un botón propio. */
   body.product-page-open .back-to-top { display: none !important; }
 
   /* ══════════════════════════════════════════════════════════════
@@ -1001,7 +1001,6 @@
   .mx-actions { display: grid; grid-template-columns: auto 1fr; gap: 10px; }
   .pmodal-btn-cancel { padding: 14px; border-radius: var(--r3); background: none; border: 1.5px solid var(--border-c); cursor: pointer; font-family: var(--font-body); font-size: 13px; font-weight: 500; color: var(--text-mid); transition: all .18s; }
   .pmodal-btn-cancel:hover { border-color: var(--text-dark); color: var(--text-dark); }
-  .mx-footer .pmodal-btn-ws { width: 100%; margin-top: 10px; }
 
   /* Botón "Agregar/Guardar" sin ninguna selección: se ve apagado pero sigue
      clickeable, para que el clic dispare el shake de aviso en vez de no hacer nada. */
@@ -1031,8 +1030,6 @@
   .pmodal-cta-wrap { display: flex; flex-direction: column; gap: 10px; }
   .pmodal-btn-cart { width: 100%; padding: 16px; border-radius: var(--r3); background: var(--text-dark); color: #fff; border: none; cursor: pointer; font-family: var(--font-body); font-size: 14px; font-weight: 500; letter-spacing: .06em; transition: background .22s, transform .22s; }
   .pmodal-btn-cart:hover { background: #3A3020; transform: translateY(-1px); }
-  .pmodal-btn-ws { width: 100%; padding: 14px; border-radius: var(--r3); background: #25D366; color: #fff; border: none; cursor: pointer; font-family: var(--font-body); font-size: 13px; font-weight: 500; transition: filter .18s, transform .22s; display: flex; align-items: center; justify-content: center; gap: 8px; }
-  .pmodal-btn-ws:hover { filter: brightness(1.08); transform: translateY(-1px); }
 
   .pmodal-shipping { display: flex; flex-direction: column; gap: 8px; padding: 17px; background: var(--cream-dark); border-radius: var(--r3); }
   .pmodal-ship-item { font-size: 12px; color: var(--text-mid); display: flex; align-items: center; gap: 9px; line-height: 1.44; }
@@ -1440,7 +1437,6 @@
     .pmodal-price { font-size: 26px; }
     /* Botones CTA más táctiles (fuera de la matriz: el flujo simple sin talles) */
     .pmodal-cta-wrap .pmodal-btn-cart { padding: 18px; font-size: 15px; }
-    .pmodal-cta-wrap .pmodal-btn-ws   { padding: 16px; }
     /* Colors más grandes */
     .pmodal-color-dot { width: 34px; height: 34px; }
     /* Qty buttons más grandes */
@@ -1458,7 +1454,6 @@
        "táctil" de escritorio tapaban buena parte de la pantalla en mobile */
     .mx-actions { grid-template-columns: 1fr 1fr; gap: 8px; }
     .mx-actions .pmodal-btn-cancel, .mx-actions .pmodal-btn-cart { min-height: 44px; padding: 0 12px; font-size: 13px; display: flex; align-items: center; justify-content: center; }
-    .mx-footer .pmodal-btn-ws { min-height: 40px; padding: 0 12px; margin-top: 8px; font-size: 12.5px; }
     .mx-chip { min-height: 44px; }
     .mx-popover-color { min-height: 44px; }
   }
@@ -3487,7 +3482,6 @@
     const allTags      = window.PEKITAS_TAGS || [];
     const productTags  = (p.productTags || []).map(id => allTags.find(t => t.id === id)).filter(Boolean);
     const settings     = window.PEKITAS_SETTINGS || {};
-    const wsNumber     = settings.whatsappNumber || '';
     const threshold    = settings.shippingThreshold || 15000;
     const freeShipping = p.price >= threshold;
     const hasOld       = p.priceOld && p.priceOld > p.price;
@@ -3527,24 +3521,10 @@
 
     const matrixHTML = hasSizes ? buildPickerContainerHTML('pmodal') : '';
 
-    const wsBtn = wsNumber ? `<button class="pmodal-btn-ws" onclick="pmodalConsultarWS()"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.118 1.523 5.85L.054 23.454a.5.5 0 0 0 .61.61l5.604-1.469A11.952 11.952 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22a9.951 9.951 0 0 1-5.16-1.436l-.369-.221-3.824 1.003 1.02-3.73-.242-.383A9.951 9.951 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg> Consultar por WhatsApp</button>` : '';
-
     const cartBtnHTML = `<button class="pmodal-btn-cart" id="pmodalCartBtn" onclick="pmodalAddToCart(event)" ${stockOut?'disabled style="opacity:.5;cursor:not-allowed"':''}>
       <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display:inline;vertical-align:middle;margin-right:8px"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
       Agregar al carrito
     </button>`;
-
-    // En modo matriz el resumen + acciones quedan pegados abajo (sticky) mientras se
-    // scrollea la lista de talles/colores, que puede ser larga.
-    const matrixFooterHTML = hasSizes ? `
-      <div class="mx-footer">
-        <div class="mx-summary" id="pmodalMxSummary"></div>
-        <div class="mx-actions">
-          <button class="pmodal-btn-cancel" type="button" onclick="goBackFromProduct()">Cancelar</button>
-          ${cartBtnHTML}
-        </div>
-        ${wsBtn}
-      </div>` : '';
 
     document.getElementById('pmodalBody').innerHTML = `
       <div class="pmodal-layout">
@@ -3570,7 +3550,8 @@
             </div>
           </div>`}
           <span class="pmodal-stock-info ${stockClass}">${stockText}</span>
-          ${hasSizes ? '' : `<div class="pmodal-cta-wrap">${cartBtnHTML}${wsBtn}</div>`}
+          ${hasSizes ? `<div class="mx-summary" id="pmodalMxSummary"></div>` : ''}
+          <div class="pmodal-cta-wrap">${cartBtnHTML}</div>
           <div class="pmodal-shipping">
             <div class="pmodal-ship-item">${freeShipping ? ' <strong>Envío gratis</strong> en esta compra' : ' Envíos a todo el país'}</div>
             <div class="pmodal-ship-item"> Compra 100% protegida</div>
@@ -3579,7 +3560,6 @@
         </div>
       </div>
       ${p.description ? `<div class="pmodal-description"><h3 class="pmodal-desc-title">Descripción</h3><p class="pmodal-desc-text">${p.description}</p></div>` : ''}
-      ${matrixFooterHTML}
     `;
 
     if (hasSizes) {
@@ -3835,27 +3815,6 @@
       document.getElementById('cartOverlay').classList.add('open');
       document.body.style.overflow = 'hidden';
     }, 150);
-  }
-
-  function pmodalConsultarWS() {
-    if (!pmodalProduct) return;
-    const ws = (window.PEKITAS_SETTINGS||{}).whatsappNumber || '';
-    if (!ws) return;
-    let extra;
-    if (pmodalMatrix) {
-      const parts = [];
-      Object.keys(pmodalMatrix).forEach(size => {
-        Object.keys(pmodalMatrix[size]).forEach(color => {
-          const qty = pmodalMatrix[size][color];
-          if (qty > 0) parts.push(`Talle ${size}${color ? ' (Color: '+hexToColorName(color)+')' : ''} x${qty}`);
-        });
-      });
-      extra = parts.join(', ');
-    } else {
-      extra = pmodalSelectedColor ? 'Color: '+hexToColorName(pmodalSelectedColor) : '';
-    }
-    const msg = encodeURIComponent('Hola! Me interesa: ' + pmodalProduct.name + ' (' + formatPrice(pmodalProduct.price) + ')' + (extra ? '. ' + extra : '') + '.');
-    window.open('https://wa.me/' + ws + '?text=' + msg, '_blank');
   }
 
   // ─── EDITAR PEDIDO ───────────────────────────────────────────────────────────

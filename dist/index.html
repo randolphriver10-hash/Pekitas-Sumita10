@@ -1952,12 +1952,15 @@
     if (soundBtn) soundBtn.style.display = 'block';
     video.play().catch(closeIntro);
   });
-  if (soundBtn) {
-    soundBtn.addEventListener('click', function(){
-      video.muted = false;
-      soundBtn.style.display = 'none';
-    });
+  function unmute() {
+    if (!video.muted) return;
+    video.muted = false;
+    if (soundBtn) soundBtn.style.display = 'none';
   }
+  if (soundBtn) soundBtn.addEventListener('click', unmute);
+  // Cualquier toque en el video (no solo el botón) activa el sonido — el botón es fácil
+  // de pasar por alto, pero tocar el video mismo es el gesto más natural.
+  video.addEventListener('click', unmute);
 })();
 </script>
 

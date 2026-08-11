@@ -876,13 +876,20 @@
   .payment-pill { padding: 5px 12px; border: 1px solid var(--border-c); border-radius: var(--r2); font-size: 10.5px; color: var(--text-light); letter-spacing: .07em; }
 
   /* ══════════════════════════════════════════════════════════════
-     PRODUCT DETAIL MODAL
+     PRODUCT DETAIL PAGE (antes era un modal/panel lateral — ahora es
+     una página propia con su URL, que cubre toda la pantalla igual en
+     mobile y desktop). El overlay de fondo ya no dimea nada (la página
+     es opaca y cubre todo) — queda inerte a propósito.
   ══════════════════════════════════════════════════════════════ */
-  #pmodalOverlay { position: fixed; inset: 0; background: rgba(0,0,0,.46); z-index: 200; opacity: 0; pointer-events: none; transition: opacity .32s var(--ease); backdrop-filter: blur(4px); }
-  #pmodalOverlay.open { opacity: 1; pointer-events: auto; }
+  #pmodalOverlay { display: none; }
 
-  #pmodal { position: fixed; top: 0; right: 0; bottom: 0; width: min(800px,100vw); background: var(--warm-white); z-index: 201; overflow-y: auto; transform: translateX(100%); transition: transform .40s var(--ease); box-shadow: var(--sh-xl); }
-  #pmodal.open { transform: translateX(0); }
+  #pmodal { position: fixed; inset: 0; width: 100%; height: 100dvh; background: var(--warm-white); z-index: 201; overflow-y: auto; opacity: 0; transform: translateY(18px); pointer-events: none; transition: opacity .32s var(--ease), transform .32s var(--ease); }
+  #pmodal.open { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  /* Los flotantes de la home (WhatsApp, volver arriba) quedaban por encima de la página
+     de producto (mismo z-index que tenían sobre el modal viejo) y ahora chocan visualmente
+     con su footer sticky de carrito — se ocultan mientras la página de producto está abierta. */
+  body.product-page-open .wa-float-btn,
+  body.product-page-open .back-to-top { display: none !important; }
 
   /* ══════════════════════════════════════════════════════════════
      EDITAR PEDIDO — sección aparte, no reutiliza el modal de producto.
@@ -1158,8 +1165,6 @@
   }
 
   @media (max-width: 680px) {
-    #pmodal { width: 100vw; top: auto; height: 92dvh; transform: translateY(100%); border-radius: var(--r5) var(--r5) 0 0; }
-    #pmodal.open { transform: translateY(0); }
     .pmodal-layout { grid-template-columns: 1fr; gap: 24px; }
     .pmodal-main-img { aspect-ratio: 4/3; }
     #pmodalBody { padding: 20px; }
@@ -1626,22 +1631,6 @@
   }
   #cartDrawer.open { transform: translateY(0); }
 
-  /* Product modal — bottom sheet on mobile */
-  #pmodal {
-    width: 100%;
-    max-width: 100%;
-    right: 0;
-    bottom: 0;
-    top: auto;
-    left: 0;
-    height: 92dvh;
-    border-radius: var(--r5) var(--r5) 0 0;
-    transform: translateY(100%);
-    transition: transform .35s cubic-bezier(.4,0,.2,1);
-    overflow-y: auto;
-  }
-  #pmodal.open { transform: translateY(0); }
-
   /* Modal inner layout */
   .pmodal-inner, .modal-inner {
     flex-direction: column;
@@ -1732,21 +1721,6 @@
     }
     #cartDrawer.open { transform: translateX(0); }
 
-    /* Product modal — side panel on tablet+ */
-    #pmodal {
-      width: 480px;
-      max-width: 480px;
-      right: 0;
-      left: auto;
-      top: 0;
-      bottom: 0;
-      height: 100%;
-      border-radius: 0;
-      transform: translateX(100%);
-      transition: transform .35s cubic-bezier(.4,0,.2,1);
-    }
-    #pmodal.open { transform: translateX(0); }
-
     .pmodal-inner, .modal-inner {
       flex-direction: column;
       padding: 32px 28px;
@@ -1773,7 +1747,6 @@
 
     #cartDrawer { width: 400px; max-width: 400px; }
 
-    #pmodal { width: 520px; max-width: 520px; }
     .pmodal-inner, .modal-inner {
       flex-direction: row;
       align-items: flex-start;
@@ -1795,7 +1768,6 @@
 
     #cartDrawer { width: 420px; max-width: 420px; }
 
-    #pmodal { width: 580px; max-width: 580px; }
     .pmodal-inner, .modal-inner { padding: 40px 36px; gap: 32px; }
   }
 
@@ -2483,10 +2455,10 @@
 </footer>
 
 <!-- PRODUCT DETAIL MODAL -->
-<div class="pmodal-overlay" id="pmodalOverlay" onclick="closeProductModal()"></div>
+<div class="pmodal-overlay" id="pmodalOverlay" onclick="goBackFromProduct()"></div>
 <div class="pmodal" id="pmodal" role="dialog" aria-modal="true" aria-label="Detalle de producto">
   <div class="pmodal-header">
-    <button class="pmodal-back" onclick="closeProductModal()">
+    <button class="pmodal-back" onclick="goBackFromProduct()">
       <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
       Volver
     </button>
@@ -3549,7 +3521,8 @@
     });
   });
 
-  function openProductModal(productId) {
+  function openProductModal(productId, opts) {
+    opts = opts || {};
     const p = getAllProducts().find(x => x.id === productId);
     if (!p) return;
     pmodalProduct = p;
@@ -3619,7 +3592,7 @@
       <div class="mx-footer">
         <div class="mx-summary" id="pmodalMxSummary"></div>
         <div class="mx-actions">
-          <button class="pmodal-btn-cancel" type="button" onclick="closeProductModal()">Cancelar</button>
+          <button class="pmodal-btn-cancel" type="button" onclick="goBackFromProduct()">Cancelar</button>
           ${cartBtnHTML}
         </div>
         ${wsBtn}
@@ -3669,6 +3642,13 @@
     document.getElementById('pmodalOverlay').classList.add('open');
     document.getElementById('pmodal').classList.add('open');
     document.body.style.overflow = 'hidden';
+    document.body.classList.add('product-page-open');
+    document.getElementById('pmodal').scrollTop = 0;
+    updateProductPageMeta(p);
+    if (!opts.skipHistory) {
+      const url = productUrl(p);
+      if (window.location.pathname !== url) history.pushState({ pekitasProductId: p.id }, '', url);
+    }
   }
 
   // ─── SWIPE entre imágenes en mobile ────────────────────────────────────────
@@ -3708,10 +3688,26 @@
     document.getElementById('pmodalOverlay').classList.remove('open');
     document.getElementById('pmodal').classList.remove('open');
     document.body.style.overflow = '';
+    document.body.classList.remove('product-page-open');
     pmodalProduct = null;
     pmodalMatrix = null;
     const wrap = document.querySelector('.pmodal-main-img');
     if (wrap) { wrap._swipeInit = false; }
+    clearProductPageMeta();
+  }
+
+  // Botón "Volver"/"Cancelar" dentro de la página de producto: si llegamos ahí desde
+  // un click interno (hay una entrada de historial nuestra), retrocede de verdad para
+  // que el botón atrás del navegador y el botón de la página se comporten igual y
+  // vuelvan al scroll donde estaba el catálogo. Si se entró por link directo (no hay
+  // nada a lo que volver dentro del sitio), navega a la home en vez de salir del sitio.
+  function goBackFromProduct() {
+    if (history.state && history.state.pekitasProductId) {
+      history.back();
+    } else {
+      history.pushState({}, '', '/');
+      closeProductModal();
+    }
   }
 
   function pmodalSetMainImg(src, el) {
@@ -3934,6 +3930,89 @@
   }, { passive: true });
 
 
+  // ─── PÁGINA DE PRODUCTO: URL propia ────────────────────────────────────────
+  // slug legible + id real al final (separado por el ÚLTIMO guion) — el id de producto
+  // (p. ej. "p1779969558206") nunca tiene guiones adentro, así que ese último guion
+  // siempre separa slug/id sin ambigüedad, aunque el nombre del producto tenga varios.
+  function slugify(str) {
+    return String(str || '')
+      .toLowerCase()
+      .normalize('NFD').replace(/\p{Mn}/gu, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  }
+  function productUrl(p) {
+    return '/producto/' + (slugify(p.name) || 'producto') + '-' + p.id;
+  }
+  function productIdFromPath(pathname) {
+    const m = pathname.match(/^\/producto\/(.+?)\/?$/);
+    if (!m) return null;
+    const slug = decodeURIComponent(m[1]);
+    const i = slug.lastIndexOf('-');
+    return i === -1 ? slug : slug.slice(i + 1);
+  }
+
+  // Título/descripción/canonical/OG/JSON-LD propios de cada producto — mismo patrón que
+  // applyStructuredData/applyBrandAssets (todo se arma en runtime, sin build). Al volver
+  // a la home hay que restaurar lo que aplica applyBrandAssets(), por eso clearProductPageMeta
+  // simplemente la vuelve a correr en vez de guardar/restaurar un snapshot a mano.
+  function updateProductPageMeta(p) {
+    const s = window.PEKITAS_SETTINGS || {};
+    const title = (p.seoTitle || p.name) + ' — Pekitas Sumita';
+    const desc = (p.seoDesc || p.description || '').trim() || (s.metaDesc || '');
+    const url = window.location.origin + productUrl(p);
+    const img = p.img || s.logoCompletoUrl || '';
+
+    document.title = title;
+    const setContent = (sel, val) => { const el = document.querySelector(sel); if (el && val) el.setAttribute('content', val); };
+    setContent('meta[property="og:title"]', title);
+    setContent('meta[name="twitter:title"]', title);
+    setContent('meta[property="og:description"]', desc);
+    setContent('meta[name="twitter:description"]', desc);
+    const metaDescTag = document.getElementById('metaDescTag');
+    if (metaDescTag && desc) metaDescTag.setAttribute('content', desc);
+    const canon = document.getElementById('canonicalUrl');
+    if (canon) canon.href = url;
+    const ogUrl = document.getElementById('ogUrlTag');
+    if (ogUrl) ogUrl.setAttribute('content', url);
+    if (img) {
+      const ogImg = document.getElementById('ogImageTag');
+      if (ogImg) ogImg.setAttribute('content', img);
+      const twImg = document.getElementById('twImageTag');
+      if (twImg) twImg.setAttribute('content', img);
+    }
+
+    const product = {
+      '@context': 'https://schema.org',
+      '@type': 'Product',
+      'name': p.name,
+      'description': desc,
+      'url': url,
+      'image': img ? [img] : undefined,
+      'offers': {
+        '@type': 'Offer',
+        'priceCurrency': 'ARS',
+        'price': p.price,
+        'availability': (p.soldOut || !(p.stock || 0)) ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock',
+        'url': url,
+      },
+    };
+    let script = document.getElementById('ldJsonProduct');
+    if (!script) {
+      script = document.createElement('script');
+      script.type = 'application/ld+json';
+      script.id = 'ldJsonProduct';
+      document.head.appendChild(script);
+    }
+    script.textContent = JSON.stringify(product).replace(/</g, '\\u003c');
+  }
+
+  function clearProductPageMeta() {
+    const script = document.getElementById('ldJsonProduct');
+    if (script) script.remove();
+    applyBrandAssets();
+  }
+
   // ─── DATOS ESTRUCTURADOS (Schema.org) ──────────────────────────────────────
   // Se arman en runtime desde settings (no en el build) para reflejar siempre los datos
   // reales del negocio sin necesitar rebuild/redeploy cuando cambian en el panel admin.
@@ -3974,6 +4053,11 @@
   // ─── BRAND ASSETS — apply logo URLs from settings ─────────────────────────
   function applyBrandAssets() {
     const s = window.PEKITAS_SETTINGS || {};
+    // Si hay una página de producto abierta, sus propios meta tags (título, descripción,
+    // canonical, OG, JSON-LD) no se deben pisar con los de la home — el refresh periódico
+    // de datos en segundo plano llama a esta función y si no, borraría el SEO del producto
+    // mientras el visitante todavía lo está viendo.
+    const productPageOpen = !!(pmodalProduct && document.getElementById('pmodal') && document.getElementById('pmodal').classList.contains('open'));
     const map = {
       'logo':         s.logoUrl         || '/assets/images/logo.PNG',
       'logotipo':     s.logotipoUrl     || '/assets/images/logotipo.png',
@@ -4014,18 +4098,20 @@
     }
 
     // Apply meta title and description dynamically
-    if (s.metaTitle) {
-      document.title = s.metaTitle;
-      const ogTitle = document.querySelector('meta[property="og:title"]');
-      if (ogTitle) ogTitle.setAttribute('content', s.metaTitle);
-      const twTitle = document.querySelector('meta[name="twitter:title"]');
-      if (twTitle) twTitle.setAttribute('content', s.metaTitle);
-    }
-    if (s.metaDesc) {
-      const ogDesc = document.querySelector('meta[property="og:description"]');
-      if (ogDesc) ogDesc.setAttribute('content', s.metaDesc);
-      const twDesc = document.querySelector('meta[name="twitter:description"]');
-      if (twDesc) twDesc.setAttribute('content', s.metaDesc);
+    if (!productPageOpen) {
+      if (s.metaTitle) {
+        document.title = s.metaTitle;
+        const ogTitle = document.querySelector('meta[property="og:title"]');
+        if (ogTitle) ogTitle.setAttribute('content', s.metaTitle);
+        const twTitle = document.querySelector('meta[name="twitter:title"]');
+        if (twTitle) twTitle.setAttribute('content', s.metaTitle);
+      }
+      if (s.metaDesc) {
+        const ogDesc = document.querySelector('meta[property="og:description"]');
+        if (ogDesc) ogDesc.setAttribute('content', s.metaDesc);
+        const twDesc = document.querySelector('meta[name="twitter:description"]');
+        if (twDesc) twDesc.setAttribute('content', s.metaDesc);
+      }
     }
 
     // Hero carousel — los banners salen únicamente de settings.heroBanners (panel admin)
@@ -4063,35 +4149,37 @@
       }
     }
 
-    // Canonical URL: se autodetecta desde la URL real que sirvió la página (con su www/https
-    // reales) en vez de confiar a ciegas en el texto cargado en el admin, que puede quedar
-    // desincronizado (p. ej. sin "www" mientras el dominio real sí redirige a www).
-    const canon = document.getElementById('canonicalUrl');
-    if (canon) canon.href = window.location.origin + window.location.pathname;
-    const ogUrl = document.getElementById('ogUrlTag');
-    if (ogUrl) ogUrl.setAttribute('content', window.location.origin + window.location.pathname);
+    if (!productPageOpen) {
+      // Canonical URL: se autodetecta desde la URL real que sirvió la página (con su www/https
+      // reales) en vez de confiar a ciegas en el texto cargado en el admin, que puede quedar
+      // desincronizado (p. ej. sin "www" mientras el dominio real sí redirige a www).
+      const canon = document.getElementById('canonicalUrl');
+      if (canon) canon.href = window.location.origin + window.location.pathname;
+      const ogUrl = document.getElementById('ogUrlTag');
+      if (ogUrl) ogUrl.setAttribute('content', window.location.origin + window.location.pathname);
 
-    // og:image / twitter:image / favicon desde el logo completo real (Supabase), nunca la
-    // ruta local /assets/images/* — esa carpeta no existe en el build de Vercel y ese path
-    // termina sirviendo el HTML de la SPA disfrazado de imagen (roto para compartir en redes).
-    if (s.logoCompletoUrl) {
-      const ogImg = document.getElementById('ogImageTag');
-      if (ogImg) ogImg.setAttribute('content', s.logoCompletoUrl);
-      const twImg = document.getElementById('twImageTag');
-      if (twImg) twImg.setAttribute('content', s.logoCompletoUrl);
-    }
-    if (s.logotipoUrl) {
-      const favIcon = document.querySelector('link[rel="icon"]');
-      if (favIcon) favIcon.href = s.logotipoUrl;
-    }
+      // og:image / twitter:image / favicon desde el logo completo real (Supabase), nunca la
+      // ruta local /assets/images/* — esa carpeta no existe en el build de Vercel y ese path
+      // termina sirviendo el HTML de la SPA disfrazado de imagen (roto para compartir en redes).
+      if (s.logoCompletoUrl) {
+        const ogImg = document.getElementById('ogImageTag');
+        if (ogImg) ogImg.setAttribute('content', s.logoCompletoUrl);
+        const twImg = document.getElementById('twImageTag');
+        if (twImg) twImg.setAttribute('content', s.logoCompletoUrl);
+      }
+      if (s.logotipoUrl) {
+        const favIcon = document.querySelector('link[rel="icon"]');
+        if (favIcon) favIcon.href = s.logotipoUrl;
+      }
 
-    // meta description estándar (la que usa Google para el resumen en resultados de búsqueda)
-    if (s.metaDesc) {
-      const metaDescTag = document.getElementById('metaDescTag');
-      if (metaDescTag) metaDescTag.setAttribute('content', s.metaDesc);
-    }
+      // meta description estándar (la que usa Google para el resumen en resultados de búsqueda)
+      if (s.metaDesc) {
+        const metaDescTag = document.getElementById('metaDescTag');
+        if (metaDescTag) metaDescTag.setAttribute('content', s.metaDesc);
+      }
 
-    applyStructuredData(s);
+      applyStructuredData(s);
+    }
 
     // Shipping threshold in cart
     if (s.shippingThreshold) {
@@ -4245,6 +4333,18 @@
     renderTrustSection();
     renderCart();
 
+    // Si se entra directo a /producto/<slug>-<id> (link compartido, refresh, o el
+    // crawler de Google) abrimos esa página de producto ya con el catálogo cargado.
+    if (!window._pekitasInitialRouteHandled) {
+      window._pekitasInitialRouteHandled = true;
+      const initialPid = productIdFromPath(window.location.pathname);
+      if (initialPid) {
+        const found = getAllProducts().find(x => x.id === initialPid);
+        if (found) openProductModal(initialPid, { skipHistory: true });
+        else history.replaceState({}, '', '/');
+      }
+    }
+
     if (typeof window.PEKITAS_LOAD_REMOTE_DATA === 'function' && !window._pekitasRemoteRefreshStarted) {
       window._pekitasRemoteRefreshStarted = true;
       const refreshRemoteData = async function() {
@@ -4267,6 +4367,17 @@
   }
 
   init();
+
+  // Atrás/adelante del navegador en la página de producto: el popstate ya trae la URL
+  // correcta, acá solo hay que sincronizar qué se ve en pantalla con esa URL.
+  window.addEventListener('popstate', function(){
+    const pid = productIdFromPath(window.location.pathname);
+    if (pid) {
+      if (!pmodalProduct || pmodalProduct.id !== pid) openProductModal(pid, { skipHistory: true });
+    } else if (pmodalProduct) {
+      closeProductModal();
+    }
+  });
 </script>
 
 <!-- IMAGE ZOOM LIGHTBOX -->

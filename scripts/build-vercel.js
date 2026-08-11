@@ -54,7 +54,27 @@ html = html
   .replace('"__SUPABASE_ANON_KEY__"', jsString(anonKey));
 
 fs.writeFileSync(path.join(DIST, 'index.html'), html, 'utf8');
-fs.writeFileSync(path.join(DIST, 'robots.txt'), 'User-agent: *\nAllow: /\n', 'utf8');
+
+// Dominio real: pekitassumitaoficial.com redirige (308) a la versión con www, así que el
+// sitemap/robots tienen que apuntar directo a la www — si no, Google indexa una URL que
+// a su vez redirige a otra, en vez de la final.
+const SITE_URL = 'https://www.pekitassumitaoficial.com';
+
+fs.writeFileSync(path.join(DIST, 'robots.txt'), `User-agent: *\nAllow: /\n\nSitemap: ${SITE_URL}/sitemap.xml\n`, 'utf8');
+
+// Sitio de una sola página real (SPA): el sitemap solo tiene la home. Si en el futuro se
+// agregan URLs propias por producto/categoría, sumarlas acá.
+const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>${SITE_URL}/</loc>
+    <lastmod>${new Date().toISOString().slice(0, 10)}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>
+`;
+fs.writeFileSync(path.join(DIST, 'sitemap.xml'), sitemap, 'utf8');
 
 console.log('Landing Vercel generada en dist/');
 console.log(`Supabase URL: ${supabaseUrl.replace(/^https:\/\/([^.]+)\./, 'https://***.')}`);

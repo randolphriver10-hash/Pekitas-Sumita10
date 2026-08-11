@@ -5,7 +5,12 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://images.unsplash.com">
-<link rel="canonical" href="" id="canonicalUrl">
+<link rel="preconnect" href="https://chthxgjajyqzandlntnw.supabase.co">
+<!-- Canónica hardcodeada con www: el dominio real 308-redirige sin-www -> www, así que
+     apuntar a la versión sin www dejaba la canónica señalando a una URL que no es la final.
+     En runtime se recalcula sola desde window.location (ver applyBrandAssets) en vez de
+     usar settings.canonicalUrl del panel admin, que quedó desactualizado sin el www. -->
+<link rel="canonical" href="https://www.pekitassumitaoficial.com/" id="canonicalUrl">
 <!-- Google Analytics (GA4) con Consent Mode v2: no se guarda ninguna cookie de
      analítica hasta que el usuario acepte en el banner (o ya lo haya aceptado antes). -->
 <script>
@@ -25,16 +30,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="index, follow">
   <meta name="author" content="Pekitas Sumita">
+  <meta name="description" content="Moda infantil por mayor en Buenos Aires. Curvas desde 6 prendas, retiro en local y envíos por transporte a todo el interior." id="metaDescTag">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Pekitas Sumita — Moda Infantil">
-  <meta property="og:description" content="Moda infantil pensada con amor, calidad y ternura. Envíos a todo el país.">
-  <meta property="og:image" content="/assets/images/LOGO_COMPLETO.png">
+  <meta property="og:url" content="https://www.pekitassumitaoficial.com/" id="ogUrlTag">
+  <meta property="og:title" content="Pekitas Sumita — Moda infantil mayorista">
+  <meta property="og:description" content="Moda infantil por mayor en Buenos Aires. Curvas desde 6 prendas, retiro en local y envíos por transporte a todo el interior.">
+  <meta property="og:image" content="https://chthxgjajyqzandlntnw.supabase.co/storage/v1/object/public/product-images/351c99df11daf233f950.png" id="ogImageTag">
+  <meta property="og:image:width" content="1200">
   <meta property="og:locale" content="es_AR">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Pekitas Sumita — Moda Infantil">
-  <meta name="twitter:description" content="Moda infantil pensada con amor, calidad y ternura.">
-<title>Pekitas Sumita — Moda Infantil</title>
-<link rel="icon" type="image/png" href="/assets/images/logo.PNG">
+  <meta name="twitter:title" content="Pekitas Sumita — Moda infantil mayorista">
+  <meta name="twitter:description" content="Moda infantil por mayor en Buenos Aires. Curvas desde 6 prendas, retiro en local y envíos por transporte a todo el interior.">
+  <meta name="twitter:image" content="https://chthxgjajyqzandlntnw.supabase.co/storage/v1/object/public/product-images/351c99df11daf233f950.png" id="twImageTag">
+<title>Pekitas Sumita — Moda infantil mayorista</title>
+<link rel="icon" type="image/png" href="https://chthxgjajyqzandlntnw.supabase.co/storage/v1/object/public/product-images/6508397b82075856c659.png">
 <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,300;6..12,400;6..12,500;6..12,600;6..12,700&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -331,25 +340,31 @@
   }
   .mayorista-hero-badge span { color: var(--text-dark); font-weight: 500; }
 
+  /* Franja de marca debajo del hero: título/bajada real del negocio sobre el fondo
+     crema normal del sitio (no sobre la foto — las fotos del banner ya traen su propio
+     texto promocional incrustado, superponer texto quedaba amontonado e ilegible).
+     Tratamiento discreto a propósito, sobre todo para SEO/contexto. */
+  .brand-strip {
+    text-align: center; padding: 40px 20px 34px; background: var(--cream);
+  }
+
   .hero-eyebrow {
-    font-size: 10.5px; letter-spacing: .36em; text-transform: uppercase; color: var(--text-light);
-    margin-bottom: 24px;
-    opacity: 0; animation: riseUp 1s var(--ease) .22s forwards;
+    font-size: 10px; letter-spacing: .32em; text-transform: uppercase; color: var(--text-mid);
+    margin-bottom: 8px;
   }
 
   .hero-title {
     font-family: var(--font-display);
-    font-size: clamp(54px, 9vw, 100px);
-    font-weight: 300; line-height: 1.02; letter-spacing: -.015em;
-    color: var(--text-dark); margin-bottom: 24px;
-    opacity: 0; animation: riseUp 1s var(--ease) .42s forwards;
+    font-size: clamp(20px, 2.6vw, 30px);
+    font-weight: 500; line-height: 1.2; letter-spacing: -.005em;
+    color: var(--text-dark);
+    margin-bottom: 8px;
   }
-  .hero-title em { font-style: italic; color: var(--text-mid); }
+  .hero-title em { font-style: italic; color: var(--accent); }
 
   .hero-subtitle {
-    font-size: 15px; font-weight: 300; color: var(--text-mid); letter-spacing: .05em; line-height: 1.7;
-    margin-bottom: 56px;
-    opacity: 0; animation: riseUp 1s var(--ease) .62s forwards;
+    font-size: 12.5px; font-weight: 300; color: var(--text-mid); letter-spacing: .03em; line-height: 1.55;
+    max-width: 460px; margin: 0 auto;
   }
 
   .hero-cta {
@@ -1121,7 +1136,6 @@
   }
 
   @media (max-width: 580px) {
-    .hero-title { font-size: 46px; }
     #productsGrid { grid-template-columns: repeat(2,1fr); gap: 14px; }
     /* categoriesGrid mobile: manejado por el bloque de RESPONSIVE más abajo */
     .nosotros-stats { grid-template-columns: 1fr 1fr; }
@@ -1454,8 +1468,6 @@
      MEJORAS MOBILE — Hero responsive
   ══════════════════════════════════════════════════════════════ */
   @media (max-width: 580px) {
-    .hero-title { font-size: 42px !important; line-height: 1.05; }
-    .hero-subtitle { font-size: 13px; margin-bottom: 36px; }
     .hero-cta { gap: 10px; }
     .btn-primary, .btn-secondary { padding: 13px 28px; font-size: 10.5px; }
     /* Mascota más pequeña en mobile para no tapar texto */
@@ -1530,8 +1542,7 @@
 
   /* Hero */
   .hero { padding: 72px 20px 48px; }
-  .hero-title { font-size: clamp(2.2rem, 10vw, 3.5rem); line-height: 1.15; }
-  .hero-subtitle { font-size: 1rem; max-width: 100%; }
+  .hero-subtitle { max-width: 100%; }
 
   /* Sections */
   section { padding: 52px 18px; }
@@ -1662,7 +1673,6 @@
     nav { padding: 0 28px; }
     section { padding: 60px 28px; }
     .hero { padding: 80px 28px 56px; }
-    .hero-title { font-size: clamp(2.8rem, 8vw, 3.8rem); }
 
     .categories-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
 
@@ -2138,6 +2148,15 @@
     <span>Scroll</span>
     <div class="scroll-line"></div>
   </div>
+</section>
+
+<!-- FRANJA DE MARCA: título/bajada real del negocio, en su propia franja (no superpuesta
+     a la foto del banner, que ya trae su propio texto promocional incrustado — superponer
+     texto encima quedaba amontonado e ilegible). También es el único <h1> de la página. -->
+<section class="brand-strip">
+  <p class="hero-eyebrow">Mayorista de moda infantil en Buenos Aires</p>
+  <h1 class="hero-title">Pekitas Sumita<br><em>Revende</em><br>Con Estilo</h1>
+  <p class="hero-subtitle">Prendas para nenas por mayor. Pedido mínimo desde una curva (6 prendas), retiro en local y envíos por transporte a todo el interior.</p>
 </section>
 
 <!-- PRODUCTOS MÁS ELEGIDOS -->
@@ -3912,6 +3931,43 @@
   }, { passive: true });
 
 
+  // ─── DATOS ESTRUCTURADOS (Schema.org) ──────────────────────────────────────
+  // Se arman en runtime desde settings (no en el build) para reflejar siempre los datos
+  // reales del negocio sin necesitar rebuild/redeploy cuando cambian en el panel admin.
+  function applyStructuredData(s) {
+    const origin = window.location.origin;
+    const org = {
+      '@context': 'https://schema.org',
+      '@type': 'ClothingStore',
+      'name': s.storeName || 'Pekitas Sumita',
+      'description': s.metaDesc || '',
+      'url': origin + '/',
+    };
+    if (s.logoCompletoUrl) org.image = s.logoCompletoUrl;
+    if (s.whatsappNumber) org.telephone = '+' + s.whatsappNumber;
+    if (s.storeAddress) org.address = { '@type': 'PostalAddress', 'streetAddress': s.storeAddress, 'addressCountry': 'AR' };
+    const sameAs = [s.instagramUrl, s.facebookUrl].filter(u => u && u !== '#');
+    if (sameAs.length) org.sameAs = sameAs;
+    org.areaServed = { '@type': 'Country', 'name': 'Argentina' };
+    org.priceRange = '$$';
+
+    const website = {
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      'name': s.storeName || 'Pekitas Sumita',
+      'url': origin + '/'
+    };
+
+    let script = document.getElementById('ldJsonData');
+    if (!script) {
+      script = document.createElement('script');
+      script.type = 'application/ld+json';
+      script.id = 'ldJsonData';
+      document.head.appendChild(script);
+    }
+    script.textContent = JSON.stringify([org, website]).replace(/</g, '\\u003c');
+  }
+
   // ─── BRAND ASSETS — apply logo URLs from settings ─────────────────────────
   function applyBrandAssets() {
     const s = window.PEKITAS_SETTINGS || {};
@@ -3976,7 +4032,8 @@
       if (heroCarousel) {
         heroCarousel.innerHTML = heroImgs.map(function(url, i){
           const priority = i === 0 || i === 1; // solo el actual y el siguiente
-          return '<div class="hero-slide"><img src="' + url + '" alt=""' +
+          const alt = 'Pekitas Sumita — moda infantil por mayor, banner ' + (i + 1);
+          return '<div class="hero-slide"><img src="' + url + '" alt="' + alt + '"' +
             (priority ? ' loading="eager" fetchpriority="' + (i === 0 ? 'high' : 'auto') + '"' : ' loading="lazy"') +
             '></div>';
         }).join('');
@@ -4003,11 +4060,35 @@
       }
     }
 
-    // Canonical URL
-    if (s.canonicalUrl) {
-      const canon = document.getElementById('canonicalUrl');
-      if (canon) canon.href = s.canonicalUrl;
+    // Canonical URL: se autodetecta desde la URL real que sirvió la página (con su www/https
+    // reales) en vez de confiar a ciegas en el texto cargado en el admin, que puede quedar
+    // desincronizado (p. ej. sin "www" mientras el dominio real sí redirige a www).
+    const canon = document.getElementById('canonicalUrl');
+    if (canon) canon.href = window.location.origin + window.location.pathname;
+    const ogUrl = document.getElementById('ogUrlTag');
+    if (ogUrl) ogUrl.setAttribute('content', window.location.origin + window.location.pathname);
+
+    // og:image / twitter:image / favicon desde el logo completo real (Supabase), nunca la
+    // ruta local /assets/images/* — esa carpeta no existe en el build de Vercel y ese path
+    // termina sirviendo el HTML de la SPA disfrazado de imagen (roto para compartir en redes).
+    if (s.logoCompletoUrl) {
+      const ogImg = document.getElementById('ogImageTag');
+      if (ogImg) ogImg.setAttribute('content', s.logoCompletoUrl);
+      const twImg = document.getElementById('twImageTag');
+      if (twImg) twImg.setAttribute('content', s.logoCompletoUrl);
     }
+    if (s.logotipoUrl) {
+      const favIcon = document.querySelector('link[rel="icon"]');
+      if (favIcon) favIcon.href = s.logotipoUrl;
+    }
+
+    // meta description estándar (la que usa Google para el resumen en resultados de búsqueda)
+    if (s.metaDesc) {
+      const metaDescTag = document.getElementById('metaDescTag');
+      if (metaDescTag) metaDescTag.setAttribute('content', s.metaDesc);
+    }
+
+    applyStructuredData(s);
 
     // Shipping threshold in cart
     if (s.shippingThreshold) {

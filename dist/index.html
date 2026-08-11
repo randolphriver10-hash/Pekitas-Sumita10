@@ -3757,7 +3757,7 @@
   let pmodalGalleryTimer = null;
   let pmodalGalleryPaused = false;
   let pmodalGalleryResumeTimeout = null;
-  const PMODAL_GALLERY_INTERVAL = 3200;
+  const PMODAL_GALLERY_INTERVAL = 2100;
 
   function pmodalGalleryTick() {
     if (pmodalGalleryPaused || document.hidden) return;
@@ -4758,8 +4758,13 @@
   }
 
   if (container) {
+    // wasPinch: un pellizco de 2 dedos dispara touchend UNA VEZ POR DEDO al soltar (no una
+    // sola vez para el gesto entero) — sin esta bandera, el segundo touchend caía dentro de
+    // la ventana de "doble toque" y reseteaba el zoom a 1 apenas terminaba el pellizco.
+    let wasPinch = false;
     container.addEventListener('touchstart', e => {
-      if (e.touches.length === 2) {
+      if (e.touches.length >= 2) {
+        wasPinch = true;
         const dx = e.touches[0].clientX - e.touches[1].clientX;
         const dy = e.touches[0].clientY - e.touches[1].clientY;
         pinchStartDist = Math.hypot(dx, dy);
@@ -4773,7 +4778,7 @@
     }, { passive: false });
 
     container.addEventListener('touchmove', e => {
-      if (e.touches.length === 2) {
+      if (e.touches.length >= 2) {
         const dx = e.touches[0].clientX - e.touches[1].clientX;
         const dy = e.touches[0].clientY - e.touches[1].clientY;
         const dist = Math.hypot(dx, dy);
@@ -4791,25 +4796,27 @@
       }
     }, { passive: false });
 
+    // Un solo handler de touchend (en vez de dos separados) para controlar el orden exacto:
+    // soltar un pellizco de 2 dedos dispara touchend UNA VEZ POR DEDO, así que hay que
+    // terminar de chequear "¿esto fue un pellizco?" con wasPinch ANTES de limpiarla, o el
+    // segundo touchend (el que realmente deja touches.length en 0) la limpiaría demasiado
+    // pronto y el doble-toque la detectaría igual, reseteando el zoom a 1 recién hecho.
+    let lastTap = 0;
     container.addEventListener('touchend', e => {
       isPanning = false;
       if (scale < 1.08) {
         scale = 1; tx = 0; ty = 0;
         applyZoomTransform(false);
       }
-    });
-
-    // Double-tap to zoom toggle
-    let lastTap = 0;
-    container.addEventListener('touchend', e => {
       const now = Date.now();
-      if (now - lastTap < 260 && e.changedTouches.length === 1) {
+      if (!wasPinch && now - lastTap < 260 && e.changedTouches.length === 1) {
         if (scale > 1.5) { scale = 1; tx = 0; ty = 0; }
         else { scale = 2.5; }
         applyZoomTransform(false);
         e.preventDefault();
       }
       lastTap = now;
+      if (e.touches.length === 0) wasPinch = false;
     }, { passive: false });
 
     // Mouse scroll to zoom (desktop)

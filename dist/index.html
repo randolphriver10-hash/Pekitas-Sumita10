@@ -709,33 +709,6 @@
   /* Zoom sutil también sobre main cuando hay hover (transición mientras carga hover) */
   .product-card:hover .product-img-main img { transform: scale(1.06); }
 
-  .product-actions {
-    position: absolute; bottom: 14px; left: 14px; right: 14px; display: flex; gap: 8px;
-    opacity: 0; transform: translateY(10px);
-    transition: all .36s var(--ease); z-index: 2;
-  }
-  .product-card:hover .product-actions { opacity: 1; transform: translateY(0); }
-
-  .btn-add-cart {
-    flex: 1; padding: 12px; background: rgba(254,252,249,.93);
-    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-    color: var(--text-dark); border: none; border-radius: var(--rfull);
-    font-family: var(--font-body); font-size: 10.5px; letter-spacing: .18em;
-    text-transform: uppercase; cursor: pointer; transition: all .28s var(--ease);
-    box-shadow: 0 3px 14px rgba(44,36,32,.14);
-  }
-  .btn-add-cart:hover { background: var(--text-dark); color: var(--cream); transform: translateY(-1px); }
-
-  .btn-wishlist {
-    width: 42px; height: 42px; background: rgba(254,252,249,.93);
-    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-    border: none; border-radius: 50%; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    transition: all .28s var(--ease); flex-shrink: 0;
-    box-shadow: 0 3px 14px rgba(44,36,32,.14);
-  }
-  .btn-wishlist:hover { background: var(--blush); transform: scale(1.10); }
-
   .product-badge {
     position: absolute; top: 14px; left: 14px;
     padding: 4px 13px; border-radius: var(--rfull);
@@ -1580,32 +1553,6 @@
     gap: 12px;
   }
 
-  /* Product actions: always visible on mobile (no hover) — sin recuadro */
-  .product-actions {
-    opacity: 1 !important;
-    transform: translateY(0) !important;
-    background: transparent;
-    backdrop-filter: none;
-    padding: 0 6px 6px;
-    gap: 5px;
-  }
-  .product-actions .btn-add-cart {
-    min-height: unset;
-    font-size: 9px;
-    padding: 7px 4px;
-    letter-spacing: .10em;
-  }
-  .product-actions .btn-wishlist {
-    min-height: unset;
-    width: 30px;
-    height: 30px;
-    padding: 0;
-  }
-  .product-actions .btn-wishlist svg {
-    width: 11px;
-    height: 11px;
-  }
-
   /* Product card */
   .product-card { border-radius: var(--r3); }
   .product-img-wrap { aspect-ratio: 3/4; }
@@ -1702,21 +1649,6 @@
     #productsGrid {
       grid-template-columns: repeat(3, 1fr);
       gap: 16px;
-    }
-
-    /* Restore hover-only product actions on pointer devices */
-    @media (hover: hover) {
-      .product-actions {
-        opacity: 0 !important;
-        transform: translateY(8px) !important;
-        transition: opacity .25s, transform .25s;
-        background: transparent;
-        padding: 0 14px 14px;
-      }
-      .product-card:hover .product-actions {
-        opacity: 1 !important;
-        transform: translateY(0) !important;
-      }
     }
 
     .categories-grid { grid-template-columns: repeat(3, 1fr); gap: 20px; }
@@ -2787,9 +2719,6 @@
     const hoverHTML = hoverEnabled && primaryHover ? `<div class="product-img-hover"><img src="${primaryHover}" alt="" loading="lazy" onerror="this.parentElement.style.background='linear-gradient(145deg,#EDD5CB,#E0C8BC)';this.style.display='none'"></div>` : '';
 
     const safeId   = (p.id||'').replace(/'/g,"\'");
-    const safeName = (p.name||'').replace(/'/g,"\'");
-    const safeSub  = (p.sub||p.category||'').replace(/'/g,"\'");
-    const safeImg  = (p.img||'').replace(/'/g,"\'");
     const isOos    = soldOutManual || (stockNum !== null && stockNum === 0);
 
     return `
@@ -2804,10 +2733,6 @@
           ${tagStripHTML}
           ${stockHTML}
           ${outOfStockHTML}
-          <div class="product-actions">
-            ${isOos ? '<span style="flex:1;text-align:center;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-mid);padding:10px 0;">Sin stock disponible</span>' : `<button class="btn-add-cart" onclick="event.stopPropagation();addToCart(event,{id:'${safeId}',name:'${safeName}',price:${p.price},sub:'${safeSub}',img:'${safeImg}'})">Agregar al carrito</button>`}
-            <button class="btn-wishlist" title="Guardar" onclick="event.stopPropagation()"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>
-          </div>
         </div>
         <div class="product-name">${p.name}</div>
         <div class="product-sub">${p.sub || p.category || ''}</div>

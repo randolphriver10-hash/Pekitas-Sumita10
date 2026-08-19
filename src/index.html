@@ -2468,6 +2468,27 @@
   const WHATSAPP_NUMBER = SETTINGS.whatsappNumber || '5491100000000';
   const SHIPPING_THRESHOLD = SETTINGS.shippingThreshold || 15000;
 
+  // Escapa texto para meterlo en innerHTML como contenido/atributo HTML —
+  // nombres/descripciones de producto y settings vienen del admin y se
+  // vuelcan crudos a innerHTML en varios lados; sin esto, un dato con
+  // <img onerror=...> se ejecuta para todos los visitantes de la tienda.
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+  // Para texto que va DENTRO de un string JS de un solo quote embebido en un
+  // atributo onclick="...('${...}')" (patrón usado en toda la landing). Antes
+  // varios call sites hacían `.replace(/'/g, "\'")`, que en JS es un no-op
+  // (la barra invertida sola no inserta nada en el string resultante, solo
+  // sirve para escapar la comilla en el LITERAL de código) — quedaba
+  // exactamente igual, así que un apóstrofo en un nombre de categoría/color/id
+  // cortaba el onclick generado. jsAttr escapa primero para el string JS
+  // (barra invertida y comilla simple) y después para el atributo HTML.
+  function jsAttr(s) {
+    return esc(String(s == null ? '' : s).replace(/\\/g, '\\\\').replace(/'/g, "\\'"));
+  }
+
   // ─── DEFAULT PRODUCTS (fallback if not injected) ──────────────────────────
   const DEFAULT_PRODUCTS = [
     { id:'p1', name:'Vestido Floral', price:8990, priceOld:null, category:'Nenas', sub:'Nenas · 2–8 años', badge:'Nuevo', badgeClass:'badge-new', img:'https://images.unsplash.com/photo-1518831959646-742c3a14ebf7?auto=format&fit=crop&w=500&q=80', imgHover:'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=500&q=80', colors:['#EDD5CB','#D8E4D8','#D4DEE8'], sizes:['2','4','6','8'], active:true, featured:true },
@@ -2527,10 +2548,10 @@
     grid.innerHTML = cats.map((c, i) => {
       const imgArr = Array.isArray(c.images) && c.images.length > 0 ? c.images : (c.img ? [c.img] : []);
       const fallback = '<div class="cat-carousel-slide active"><div style="width:100%;height:100%;background:linear-gradient(145deg,#F2E4DC,#D8E4D8);display:flex;align-items:center;justify-content:center;font-size:36px;"></div></div>';
-      const slides = imgArr.map((img, si) => `<div class="cat-carousel-slide ${si===0?'active':''}"><img src="${img}" alt="${c.name}" loading="lazy" onerror="this.parentElement.style.background='linear-gradient(145deg,#F2E4DC,#D8E4D8)';this.style.display='none'"></div>`).join('') || fallback;
+      const slides = imgArr.map((img, si) => `<div class="cat-carousel-slide ${si===0?'active':''}"><img src="${img}" alt="${esc(c.name)}" loading="lazy" onerror="this.parentElement.style.background='linear-gradient(145deg,#F2E4DC,#D8E4D8)';this.style.display='none'"></div>`).join('') || fallback;
       const dots = imgArr.length > 1 ? imgArr.map((_, di) => `<button class="cat-carousel-dot ${di===0?'active':''}" onclick="event.stopPropagation();goCarousel('cat${i}',${di})"></button>`).join('') : '';
-            const catName = c.name.replace(/'/g, "\'");
-      return `<div class="cat-card" data-catidx="${i}" onclick="onCategoryCardClick('${catName}')"><div class="cat-bg"><div class="cat-carousel" id="carousel-cat${i}">${slides}</div></div><div class="cat-carousel-dots">${dots}</div><div class="cat-info"><div class="cat-name">${c.name}</div><div class="cat-sub">${c.description || ''}</div></div><div class="cat-arrow"><svg width="14" height="14" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div></div>`;
+            const catName = jsAttr(c.name);
+      return `<div class="cat-card" data-catidx="${i}" onclick="onCategoryCardClick('${catName}')"><div class="cat-bg"><div class="cat-carousel" id="carousel-cat${i}">${slides}</div></div><div class="cat-carousel-dots">${dots}</div><div class="cat-info"><div class="cat-name">${esc(c.name)}</div><div class="cat-sub">${esc(c.description || '')}</div></div><div class="cat-arrow"><svg width="14" height="14" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div></div>`;
     }).join('');
 
     // FIX: Staggered entrance animation for dynamically-created elements.
@@ -2581,7 +2602,7 @@
       const todoBtn = `<button class="filter-chip filter-chip-all ${allActive?'active':''}" onclick="setCategoryFilter(null)">Todo</button>`;
       const catBtns = allCats.map(c => {
         const isActive = currentCategoryFilter === c.name;
-        const safe = (c.name||'').replace(/'/g, "\'");
+        const safe = jsAttr(c.name);
         return `<button class="filter-chip ${isActive?'active':''}" onclick="setCategoryFilter('${safe}')">${c.name}</button>`;
       }).join('');
       catContainer.innerHTML = todoBtn + catBtns;
@@ -2599,7 +2620,7 @@
           const subAll = `<button class="filter-chip filter-chips-subcat ${allSubActive?'active':''}" onclick="setSubcatFilter(null)">Todos</button>`;
           const subBtns = subcats.map(s => {
             const active = currentSubcatFilter === s;
-            const safe = s.replace(/'/g, "\'");
+            const safe = jsAttr(s);
             return `<button class="filter-chip ${active?'active':''}" onclick="setSubcatFilter('${safe}')">${s}</button>`;
           }).join('');
           subcatContainer.innerHTML = subAll + subBtns;
@@ -2694,7 +2715,7 @@
   function productCardHTML(p, delayClass, allTags, hoverEnabled, lowStockThreshold) {
     const colorDots = (p.colors || []).map(c => `<div class="color-dot" style="background:${c};"></div>`).join('');
     const priceOldHTML = p.priceOld ? `<span class="price-old">${formatPrice(p.priceOld)}</span>` : '';
-    const badgeHTML = p.badge ? `<span class="product-badge ${p.badgeClass || ''}">${p.badge}</span>` : '';
+    const badgeHTML = p.badge ? `<span class="product-badge ${p.badgeClass || ''}">${esc(p.badge)}</span>` : '';
 
     const stockNum = typeof p.stock === 'number' ? p.stock : null;
     const soldOutManual = !!p.soldOut;
@@ -2706,21 +2727,21 @@
 
     const productTagBadges = (p.productTags || [])
       .map(tid => allTags.find(t => t.id === tid)).filter(Boolean)
-      .map(t => `<span class="product-tag-badge" style="background:${t.bg};color:${t.textColor};border:1px solid ${t.border||'transparent'}">${t.icon||''} ${t.name}</span>`)
+      .map(t => `<span class="product-tag-badge" style="background:${t.bg};color:${t.textColor};border:1px solid ${t.border||'transparent'}">${esc(t.icon||'')} ${esc(t.name)}</span>`)
       .join('');
     const tagStripHTML = productTagBadges ? `<div class="product-tag-strip">${productTagBadges}</div>` : '';
 
     const primaryHover = (p.imgHovers && p.imgHovers.length > 0) ? p.imgHovers[0] : (p.imgHover || '');
     const hoverHTML = hoverEnabled && primaryHover ? `<div class="product-img-hover"><img src="${primaryHover}" alt="" loading="lazy" onerror="this.parentElement.style.background='linear-gradient(145deg,#EDD5CB,#E0C8BC)';this.style.display='none'"></div>` : '';
 
-    const safeId   = (p.id||'').replace(/'/g,"\'");
+    const safeId   = jsAttr(p.id);
     const isOos    = soldOutManual || (stockNum !== null && stockNum === 0);
 
     return `
       <div class="product-card reveal ${delayClass}" onclick="${isOos?'':"openProductModal('" + safeId + "')"}" style="cursor:${isOos?'default':'pointer'};${isOos?'opacity:0.7':''}">
         <div class="product-img-wrap">
           <div class="product-img-main">
-            <img src="${p.img || ''}" alt="${p.name}" loading="lazy" onerror="this.parentElement.style.background='linear-gradient(145deg,#F2E4DC,#E8D8CE)';this.style.display='none'">
+            <img src="${p.img || ''}" alt="${esc(p.name)}" loading="lazy" onerror="this.parentElement.style.background='linear-gradient(145deg,#F2E4DC,#E8D8CE)';this.style.display='none'">
           </div>
           ${hoverHTML}
           ${soldOutBannerHTML}
@@ -2729,8 +2750,8 @@
           ${stockHTML}
           ${outOfStockHTML}
         </div>
-        <div class="product-name">${p.name}</div>
-        <div class="product-sub">${p.sub || p.category || ''}</div>
+        <div class="product-name">${esc(p.name)}</div>
+        <div class="product-sub">${esc(p.sub || p.category || '')}</div>
         <div class="product-price">
           <span class="price-current">${formatPrice(p.price)}</span>
           ${priceOldHTML}
@@ -2882,13 +2903,13 @@
         );
     const grid = document.getElementById('searchResultsGrid');
     if (filtered.length === 0) {
-      grid.innerHTML = `<div class="search-no-results">No encontramos resultados para "<em>${query}</em>"</div>`;
+      grid.innerHTML = `<div class="search-no-results">No encontramos resultados para "<em>${esc(query)}</em>"</div>`;
       return;
     }
     grid.innerHTML = filtered.map(p => `
-      <div class="search-result-card" onclick="openProductModal('${(p.id||'').replace(/'/g,"\'")}'); closeSearch();">
-        <div class="search-result-img"><img src="${p.img||''}" alt="${p.name}" loading="lazy" onerror="this.parentElement.style.background='linear-gradient(145deg,#F2E4DC,#E8D8CE)';this.style.display='none'"></div>
-        <div class="search-result-name">${p.name}</div>
+      <div class="search-result-card" onclick="openProductModal('${jsAttr(p.id)}'); closeSearch();">
+        <div class="search-result-img"><img src="${p.img||''}" alt="${esc(p.name)}" loading="lazy" onerror="this.parentElement.style.background='linear-gradient(145deg,#F2E4DC,#E8D8CE)';this.style.display='none'"></div>
+        <div class="search-result-name">${esc(p.name)}</div>
         <div class="search-result-price">${formatPrice(p.price)}</div>
       </div>
     `).join('');
@@ -2971,7 +2992,7 @@
             ${first.selectedSize  ? `<span class="cart-variant-size">Talle ${first.selectedSize}</span>` : ''}
           </div>` : '';
 
-      const viewMoreHTML = multi ? `<button class="cart-item-viewmore" onclick="toggleCartDetail('${id}')" aria-expanded="${expanded}">${expanded ? 'Ver menos' : 'Ver más'} <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="transform:rotate(${expanded?180:0}deg);transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg></button>` : '';
+      const viewMoreHTML = multi ? `<button class="cart-item-viewmore" onclick="toggleCartDetail('${jsAttr(id)}')" aria-expanded="${expanded}">${expanded ? 'Ver menos' : 'Ver más'} <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="transform:rotate(${expanded?180:0}deg);transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg></button>` : '';
 
       const detailHTML = (multi && expanded) ? `<div class="cart-item-detail">${lines.map(l => {
         const variant = [l.selectedSize ? 'Talle '+l.selectedSize : '', l.selectedColor ? hexToColorName(l.selectedColor) : ''].filter(Boolean).join(' · ') || 'Cantidad';
@@ -2980,17 +3001,17 @@
 
       return `
       <div class="cart-item" id="item-${id}">
-        <div class="cart-item-img"><img src="${first.img}" alt="${first.name}" onerror="this.parentElement.style.background='linear-gradient(145deg,#F2E4DC,#E8D8CE)';this.style.display='none'"></div>
+        <div class="cart-item-img"><img src="${first.img}" alt="${esc(first.name)}" onerror="this.parentElement.style.background='linear-gradient(145deg,#F2E4DC,#E8D8CE)';this.style.display='none'"></div>
         <div class="cart-item-info">
-          <div class="cart-item-name">${first.name}</div>
-          <div class="cart-item-sub">${first.sub}</div>
+          <div class="cart-item-name">${esc(first.name)}</div>
+          <div class="cart-item-sub">${esc(first.sub)}</div>
           ${variantsInlineHTML}
           <div class="cart-item-price">${groupQty} unidad${groupQty===1?'':'es'} · ${formatPrice(groupSubtotal)}</div>
           ${viewMoreHTML}
           ${detailHTML}
-          <button class="cart-item-edit" onclick="editCartItem('${id}')" aria-label="Editar pedido de ${first.name}"><svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>Editar pedido</button>
+          <button class="cart-item-edit" onclick="editCartItem('${jsAttr(id)}')" aria-label="Editar pedido de ${esc(first.name)}"><svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>Editar pedido</button>
         </div>
-        <button class="cart-item-remove" onclick="removeProductFromCart('${id}')" title="Eliminar"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+        <button class="cart-item-remove" onclick="removeProductFromCart('${jsAttr(id)}')" title="Eliminar"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
       </div>`;
     }).join('');
   }
@@ -3153,18 +3174,19 @@
     if (parent) parent.querySelectorAll('.cat-carousel-dot').forEach((d,i) => d.classList.toggle('active', i === idx));
   }
 
-  // Auto-rotate carousels
-  const carouselIds = [];
-  document.querySelectorAll('.cat-carousel').forEach(el => { if(el.id) carouselIds.push(el.id.replace('carousel-','')); });
+  // Auto-rotate carousels — se buscan los `.cat-carousel` en cada tick, no una
+  // sola vez al cargar el script: #categoriesGrid recién se puebla cuando
+  // corre init() (más abajo), así que la lista se congelaba vacía para
+  // siempre y las fotos de las tarjetas de categoría nunca rotaban solas
+  // (los puntitos manuales sí, porque llaman a goCarousel directo).
   const carouselIndices = {};
-  carouselIds.forEach(id => { carouselIndices[id] = 0; });
   setInterval(() => {
-    carouselIds.forEach(id => {
-      const carousel = document.getElementById('carousel-' + id);
-      if (!carousel) return;
+    document.querySelectorAll('.cat-carousel').forEach(carousel => {
+      const id = carousel.id.replace('carousel-', '');
+      if (!id) return;
       const slides = carousel.querySelectorAll('.cat-carousel-slide');
       if (slides.length <= 1) return;
-      carouselIndices[id] = (carouselIndices[id] + 1) % slides.length;
+      carouselIndices[id] = ((carouselIndices[id] || 0) + 1) % slides.length;
       goCarousel(id, carouselIndices[id]);
     });
   }, 4000);
@@ -3406,7 +3428,14 @@
       const p = getProduct(), matrix = getMatrix();
       const size = sizesList()[si], color = colorsList()[ci];
       const max = p?.stock || 99;
-      matrix[size][color] = Math.max(0, Math.min(max, Math.floor(qty) || 0));
+      // p.stock es UN número por producto, no por talle/color — antes esto
+      // solo topeaba la celda individual, así que con 3 talles x 2 colores se
+      // podían poner `max` unidades en CADA celda (hasta 6x el stock real en
+      // el carrito). Se topea la SUMA de todo el picker, no cada celda sola.
+      const current = matrix[size][color] || 0;
+      const restoDelMatrix = computeMatrixTotals(matrix).totalQty - current;
+      const disponible = Math.max(0, max - restoDelMatrix);
+      matrix[size][color] = Math.max(0, Math.min(disponible, Math.floor(qty) || 0));
     }
 
     return {
@@ -3506,7 +3535,7 @@
           ${soldOutBannerHTML}
         </div>
         <div class="pmodal-zoom-pane" id="pmodalZoomPane"></div>
-        ${imgs.length > 1 ? `<div class="pmodal-thumbs">${imgs.map((img,idx) => `<div class="pmodal-thumb ${idx===0?'active':''}" onclick="pmodalSetMainImg('${img.replace(/'/g,"\'") }',this)"><img src="${img}" alt="${p.name}"></div>`).join('')}</div>` : ''}
+        ${imgs.length > 1 ? `<div class="pmodal-thumbs">${imgs.map((img,idx) => `<div class="pmodal-thumb ${idx===0?'active':''}" onclick="pmodalSetMainImg('${jsAttr(img)}',this)"><img src="${img}" alt="${esc(p.name)}"></div>`).join('')}</div>` : ''}
       </div>`;
 
     const tagsHTML = productTags.length ? `<div class="pmodal-tags">${productTags.map(t => `<span class="pmodal-tag" style="background:${t.bg};color:${t.textColor};border:1px solid ${t.border||'transparent'}">${t.icon||''} ${t.name}</span>`).join('')}</div>` : '';
@@ -3517,7 +3546,7 @@
     };
 
     // Fallback sin talles (raro: producto sin sizes cargados) — solo color simple + cantidad, sin matriz
-    const colorsHTML = (!hasSizes && p.colors && p.colors.length) ? `<div><div class="pmodal-section-label">Color</div><div class="pmodal-colors">${p.colors.map(c => colorDotHTML(c, c===pmodalSelectedColor, `pmodalSetColor('${c.replace(/'/g,"\'")}')`)).join('')}</div></div>` : '';
+    const colorsHTML = (!hasSizes && p.colors && p.colors.length) ? `<div><div class="pmodal-section-label">Color</div><div class="pmodal-colors">${p.colors.map(c => colorDotHTML(c, c===pmodalSelectedColor, `pmodalSetColor('${jsAttr(c)}')`)).join('')}</div></div>` : '';
 
     const matrixHTML = hasSizes ? buildPickerContainerHTML('pmodal') : '';
 
@@ -4052,6 +4081,13 @@
   }
 
   // ─── BRAND ASSETS — apply logo URLs from settings ─────────────────────────
+  // Firma del último set de banners/imágenes aplicado — applyBrandAssets()
+  // corre cada 30s (refresh de datos) más en cada focus/visibilitychange, y
+  // antes reconstruía el carrusel entero (y lo reiniciaba en el banner 1) en
+  // CADA corrida así no hubiera cambiado nada, sacándole al visitante el
+  // banner que estaba mirando. Solo se reconstruye si la lista realmente cambió.
+  let lastHeroBannersSig = null, lastNcImagesSig = null;
+
   function applyBrandAssets() {
     const s = window.PEKITAS_SETTINGS || {};
     // Si hay una página de producto abierta, sus propios meta tags (título, descripción,
@@ -4118,26 +4154,30 @@
     // Hero carousel — los banners salen únicamente de settings.heroBanners (panel admin)
     if (s.heroBanners && Array.isArray(s.heroBanners)) {
       const heroImgs = s.heroBanners.filter(Boolean);
-      const heroCarousel = document.getElementById('heroCarousel');
-      if (heroCarousel) {
-        heroCarousel.innerHTML = heroImgs.map(function(url, i){
-          const priority = i === 0 || i === 1; // solo el actual y el siguiente
-          const alt = 'Pekitas Sumita — moda infantil por mayor, banner ' + (i + 1);
-          return '<div class="hero-slide"><img src="' + url + '" alt="' + alt + '"' +
-            (priority ? ' loading="eager" fetchpriority="' + (i === 0 ? 'high' : 'auto') + '"' : ' loading="lazy"') +
-            '></div>';
-        }).join('');
-        // Precarga real solo del banner actual + el siguiente
-        heroImgs.slice(0, 2).forEach(function(url){
-          if (!document.querySelector('link[rel="preload"][href="' + url + '"]')) {
-            const link = document.createElement('link');
-            link.rel = 'preload'; link.as = 'image'; link.href = url;
-            document.head.appendChild(link);
-          }
-        });
+      const heroSig = heroImgs.join('|');
+      if (heroSig !== lastHeroBannersSig) {
+        lastHeroBannersSig = heroSig;
+        const heroCarousel = document.getElementById('heroCarousel');
+        if (heroCarousel) {
+          heroCarousel.innerHTML = heroImgs.map(function(url, i){
+            const priority = i === 0 || i === 1; // solo el actual y el siguiente
+            const alt = 'Pekitas Sumita — moda infantil por mayor, banner ' + (i + 1);
+            return '<div class="hero-slide"><img src="' + url + '" alt="' + alt + '"' +
+              (priority ? ' loading="eager" fetchpriority="' + (i === 0 ? 'high' : 'auto') + '"' : ' loading="lazy"') +
+              '></div>';
+          }).join('');
+          // Precarga real solo del banner actual + el siguiente
+          heroImgs.slice(0, 2).forEach(function(url){
+            if (!document.querySelector('link[rel="preload"][href="' + url + '"]')) {
+              const link = document.createElement('link');
+              link.rel = 'preload'; link.as = 'image'; link.href = url;
+              document.head.appendChild(link);
+            }
+          });
+        }
+        if (typeof window.heroCarouselRestart === 'function') window.heroCarouselRestart();
       }
     }
-    if (typeof window.heroCarouselRestart === 'function') window.heroCarouselRestart();
 
     // Announcement bar
     if (s.announceTexts && s.announceTexts.length) {
@@ -4228,7 +4268,9 @@
     // ─── CAROUSEL NUEVA COLECCIÓN ───────────────────────────────────────────
     if (s.ncCarouselImages && Array.isArray(s.ncCarouselImages)) {
       const imgs = s.ncCarouselImages.filter(Boolean);
-      if (imgs.length) {
+      const ncSig = imgs.join('|');
+      if (imgs.length && ncSig !== lastNcImagesSig) {
+        lastNcImagesSig = ncSig;
         const carousel = document.getElementById('ncCarousel');
         const dotsEl   = document.getElementById('ncDots');
         if (carousel) {
@@ -4243,12 +4285,11 @@
         }
       }
     }
-    // Reiniciar timer del carrusel con la velocidad configurada (si cambió)
-    if (typeof window.ncSlide === 'function') {
-      // Disparar un slide virtual para resetear el timer con la nueva velocidad
-      // Se hace via el ncGoTo para no cambiar el slide activo
-      if (typeof window.ncGoTo === 'function') window.ncGoTo(0);
-    }
+    // Reiniciar el timer con la velocidad configurada (por si cambió) sin
+    // tocar el slide activo — antes esto llamaba a ncGoTo(0), que a pesar de
+    // su propio comentario ("no cambiar el slide activo") sí lo cambiaba
+    // (ncGoTo hace ncIdx = i), saltando al primer slide cada 30s.
+    if (typeof window.ncResetTimer === 'function') window.ncResetTimer();
   }
 
   // ─── WHATSAPP GROUP PASSWORD ────────────────────────────────────────────────
@@ -4754,13 +4795,6 @@
     openImgZoom(mainSrc, all, idx >= 0 ? idx : 0);
   });
 
-  // ── Hacer clickeables imágenes en búsqueda ───────────────────────────────
-  document.addEventListener('click', function(e) {
-    const ri = e.target.closest('.search-result-img');
-    if (!ri) return;
-    const img = ri.querySelector('img');
-    if (img && img.src) openImgZoom(img.src, [img.src], 0);
-  });
 
 })();
 </script>
@@ -4809,6 +4843,7 @@
     clearInterval(ncTimer);
     ncTimer = setInterval(()=>{ window.ncSlide(1); }, ncGetInterval());
   }
+  window.ncResetTimer = ncResetTimer;
 
   document.addEventListener('DOMContentLoaded', function(){
     if(document.getElementById('ncCarousel')){

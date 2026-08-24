@@ -2711,6 +2711,20 @@
     return !(stockNum !== null && stockNum === 0);
   }
 
+  // Lo último que se cargó al panel va primero, y de ahí para atrás. La fecha
+  // real (createdAt) es la fuente; el viejo campo "order" solo desempata los
+  // productos cargados antes de que se guardara la fecha. "order" NO es un
+  // orden elegido desde el panel (no se puede editar) y tiene duplicados, así
+  // que no sirve para ordenar por sí solo.
+  function productRecencyCompare(a, b) {
+    const ta = a.createdAt ? Date.parse(a.createdAt) : NaN;
+    const tb = b.createdAt ? Date.parse(b.createdAt) : NaN;
+    const va = Number.isFinite(ta) ? ta : -Infinity;
+    const vb = Number.isFinite(tb) ? tb : -Infinity;
+    if (va !== vb) return vb - va;
+    return (b.order || 0) - (a.order || 0);
+  }
+
   // Tarjeta de producto reutilizada tanto por "Todos los productos" como por "Productos más elegidos"
   function productCardHTML(p, delayClass, allTags, hoverEnabled, lowStockThreshold) {
     const colorDots = (p.colors || []).map(c => `<div class="color-dot" style="background:${c};"></div>`).join('');
@@ -2775,12 +2789,14 @@
     const grid = document.getElementById('productsGrid');
     if (!grid) return;
 
-    // Disponibles primero, agotados después; dentro de cada grupo se respeta el orden configurado en el admin
+    // Disponibles primero, agotados después; dentro de cada grupo, lo más nuevo
+    // arriba. Un agotado nunca le roba el primer lugar a algo que sí se puede
+    // vender, pero una prenda recién cargada aparece primera de todo.
     products = [...products].sort((a, b) => {
       const aOos = isProductAvailable(a) ? 0 : 1;
       const bOos = isProductAvailable(b) ? 0 : 1;
       if (aOos !== bOos) return aOos - bOos;
-      return (a.order || 0) - (b.order || 0);
+      return productRecencyCompare(a, b);
     });
 
     const delays = ['reveal-delay-1','reveal-delay-2','reveal-delay-3','reveal-delay-4'];

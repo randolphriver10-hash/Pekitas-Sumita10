@@ -2704,11 +2704,12 @@
     renderProductsSection();
   }
 
-  // Disponibilidad: misma lógica que ya usa cada tarjeta (soldOut manual o stock=0). Única fuente de verdad.
+  // Disponibilidad: SOLO el marcado manual de agotado. Ya no hay número de
+  // stock — el catálogo funciona listado/quitado, no por cantidad (el stock
+  // real se confirma recién después de que el cliente arma el pedido, por
+  // WhatsApp). Única fuente de verdad.
   function isProductAvailable(p) {
-    if (p.soldOut) return false;
-    const stockNum = typeof p.stock === 'number' ? p.stock : null;
-    return !(stockNum !== null && stockNum === 0);
+    return !p.soldOut;
   }
 
   // Lo último que se cargó al panel va primero, y de ahí para atrás. La fecha
@@ -2726,17 +2727,12 @@
   }
 
   // Tarjeta de producto reutilizada tanto por "Todos los productos" como por "Productos más elegidos"
-  function productCardHTML(p, delayClass, allTags, hoverEnabled, lowStockThreshold) {
+  function productCardHTML(p, delayClass, allTags, hoverEnabled) {
     const colorDots = (p.colors || []).map(c => `<div class="color-dot" style="background:${c};"></div>`).join('');
     const priceOldHTML = p.priceOld ? `<span class="price-old">${formatPrice(p.priceOld)}</span>` : '';
     const badgeHTML = p.badge ? `<span class="product-badge ${p.badgeClass || ''}">${esc(p.badge)}</span>` : '';
 
-    const stockNum = typeof p.stock === 'number' ? p.stock : null;
     const soldOutManual = !!p.soldOut;
-    const stockHTML = (!soldOutManual && stockNum !== null && stockNum > 0 && stockNum <= lowStockThreshold)
-      ? `<div class="stock-alert">⚡ Últimas ${stockNum} unidades</div>` : '';
-    const outOfStockHTML = (!soldOutManual && stockNum !== null && stockNum === 0)
-      ? `<div class="stock-alert" style="background:rgba(44,36,32,0.65)">Sin stock</div>` : '';
     const soldOutBannerHTML = soldOutManual ? `<div class="sold-out-banner"><span>Agotado</span></div>` : '';
 
     const productTagBadges = (p.productTags || [])
@@ -2749,7 +2745,7 @@
     const hoverHTML = hoverEnabled && primaryHover ? `<div class="product-img-hover"><img src="${primaryHover}" alt="" loading="lazy" onerror="this.parentElement.style.background='linear-gradient(145deg,#EDD5CB,#E0C8BC)';this.style.display='none'"></div>` : '';
 
     const safeId   = jsAttr(p.id);
-    const isOos    = soldOutManual || (stockNum !== null && stockNum === 0);
+    const isOos    = soldOutManual;
 
     return `
       <div class="product-card reveal ${delayClass}" onclick="${isOos?'':"openProductModal('" + safeId + "')"}" style="cursor:${isOos?'default':'pointer'};${isOos?'opacity:0.7':''}">
@@ -2761,8 +2757,6 @@
           ${soldOutBannerHTML}
           ${badgeHTML}
           ${tagStripHTML}
-          ${stockHTML}
-          ${outOfStockHTML}
         </div>
         <div class="product-name">${esc(p.name)}</div>
         <div class="product-sub">${esc(p.sub || p.category || '')}</div>
@@ -2802,7 +2796,6 @@
     const delays = ['reveal-delay-1','reveal-delay-2','reveal-delay-3','reveal-delay-4'];
     const settings = window.PEKITAS_SETTINGS || {};
     const hoverEnabled = settings.hoverEnabled !== false;
-    const lowStockThreshold = settings.lowStockThreshold || 5;
     const allTags = window.PEKITAS_TAGS || [];
 
     // Update product count display
@@ -2817,7 +2810,7 @@
       return;
     }
 
-    grid.innerHTML = products.map((p, i) => productCardHTML(p, delays[i % 4], allTags, hoverEnabled, lowStockThreshold)).join('');
+    grid.innerHTML = products.map((p, i) => productCardHTML(p, delays[i % 4], allTags, hoverEnabled)).join('');
 
     document.querySelectorAll('#productsGrid .reveal').forEach(r => observer.observe(r));
   }
@@ -2837,11 +2830,10 @@
     if (!featured.length) { grid.innerHTML = ''; return; }
 
     const hoverEnabled = settings.hoverEnabled !== false;
-    const lowStockThreshold = settings.lowStockThreshold || 5;
     const allTags = window.PEKITAS_TAGS || [];
     const delays = ['reveal-delay-1','reveal-delay-2','reveal-delay-3','reveal-delay-4'];
 
-    grid.innerHTML = featured.map((p, i) => productCardHTML(p, delays[i % 4], allTags, hoverEnabled, lowStockThreshold)).join('');
+    grid.innerHTML = featured.map((p, i) => productCardHTML(p, delays[i % 4], allTags, hoverEnabled)).join('');
     document.querySelectorAll('#featuredProductsGrid .reveal').forEach(r => observer.observe(r));
     initFeaturedAutoSlide(grid);
   }
@@ -3460,13 +3452,12 @@
     }
 
     function setQtyRaw(si, ci, qty) {
-      const p = getProduct(), matrix = getMatrix();
+      const matrix = getMatrix();
       const size = sizesList()[si], color = colorsList()[ci];
-      const max = p?.stock || 99;
-      // p.stock es UN número por producto, no por talle/color — antes esto
-      // solo topeaba la celda individual, así que con 3 talles x 2 colores se
-      // podían poner `max` unidades en CADA celda (hasta 6x el stock real en
-      // el carrito). Se topea la SUMA de todo el picker, no cada celda sola.
+      // Ya no hay número de stock por producto (se confirma manualmente
+      // después de armado el pedido) -- este tope es solo una cota sana de UI
+      // contra un typo tipo "9999", no una validación de inventario real.
+      const max = 99;
       const current = matrix[size][color] || 0;
       const restoDelMatrix = computeMatrixTotals(matrix).totalQty - current;
       const disponible = Math.max(0, max - restoDelMatrix);
@@ -3554,11 +3545,10 @@
     const hoverImgArr = (p.imgHovers && p.imgHovers.length) ? p.imgHovers : [p.imgHover].filter(Boolean);
     const imgs = [p.img, ...hoverImgArr].filter(Boolean).filter((v,i,a)=>a.indexOf(v)===i);
     const soldOutManual = !!p.soldOut;
-    const stockOk      = !soldOutManual && (p.stock || 0) > 5;
-    const stockLow     = !soldOutManual && (p.stock || 0) > 0 && (p.stock || 0) <= 5;
-    const stockOut     = soldOutManual || !(p.stock || 0);
-    const stockClass   = stockOut ? 'stock-out' : stockLow ? 'stock-low' : 'stock-ok';
-    const stockText    = soldOutManual ? ' Agotado' : stockOut ? ' Sin stock' : stockLow ? ` Últimas ${p.stock} unidades` : ' En stock';
+    // Sin número de stock: solo disponible/agotado, según el marcado manual.
+    const stockOut     = soldOutManual;
+    const stockClass   = stockOut ? 'stock-out' : 'stock-ok';
+    const stockText    = stockOut ? ' Agotado' : ' En stock';
     const soldOutBannerHTML = soldOutManual ? `<div class="sold-out-banner"><span>Agotado</span></div>` : '';
 
     const galleryHTML = `
@@ -3816,14 +3806,14 @@
   }
 
   function pmodalChangeQty(delta) {
-    const max = pmodalProduct?.stock || 99;
+    const max = 99; // cota sana de UI, ya no hay número de stock por producto
     pmodalQty = Math.max(1, Math.min(max, pmodalQty + delta));
     const el = document.getElementById('pmodalQtyNum');
     if (el) el.textContent = pmodalQty;
   }
 
   // Recalcula el total/subtotal. El botón solo se deshabilita de verdad si el
-  // producto no tiene stock — sin selección se deja tocar igual, para que
+  // producto está marcado agotado — sin selección se deja tocar igual, para que
   // pmodalAddToCart pueda detectarlo y sacudir la sección que falta completar en
   // vez de no responder (que es justo lo confuso que había que arreglar).
   function pmodalUpdateFooter() {
@@ -3834,7 +3824,7 @@
     const totalQty = computeMatrixTotals(pmodalMatrix).totalQty;
     const btn = document.getElementById('pmodalCartBtn');
     if (btn) {
-      btn.disabled = p.soldOut || !(p.stock || 0);
+      btn.disabled = !!p.soldOut;
       btn.classList.toggle('is-empty-look', totalQty === 0 && !btn.disabled);
     }
   }
@@ -3843,8 +3833,6 @@
     if (!pmodalProduct) return;
     const p = pmodalProduct;
     if (p.soldOut) return; // marcado agotado manualmente
-    const stockNum = typeof p.stock === 'number' ? p.stock : 999;
-    if (stockNum === 0) return; // out of stock
 
     let lines;
     if (pmodalMatrix) {
@@ -4058,7 +4046,7 @@
         '@type': 'Offer',
         'priceCurrency': 'ARS',
         'price': p.price,
-        'availability': (p.soldOut || !(p.stock || 0)) ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock',
+        'availability': p.soldOut ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock',
         'url': url,
       },
     };

@@ -3271,6 +3271,14 @@
       '#ffece1':'Durazno claro','#ffece3':'Rosa claro','#fff1eb':'Crudo rosado'
     };
     const hex = raw.toLowerCase();
+    // Nombre elegido a mano en el panel admin (Configuración → Nombres de los colores): tiene prioridad.
+    // Se limpian caracteres que romperían atributos HTML (el nombre se usa en title="..." y etiquetas).
+    const hexN = hex.length === 4 ? `#${hex[1]}${hex[1]}${hex[2]}${hex[2]}${hex[3]}${hex[3]}` : hex;
+    const propios = (window.PEKITAS_SETTINGS && window.PEKITAS_SETTINGS.coloresNombres) || null;
+    if (propios && typeof propios === 'object' && typeof propios[hexN] === 'string') {
+      const nombre = propios[hexN].replace(/[<>"'`&\\]/g, '').replace(/\s+/g, ' ').trim().slice(0, 40);
+      if (nombre) return nombre;
+    }
     if (exact[hex]) return exact[hex];
     const fullHex = hex.length === 4 ? `#${hex[1]}${hex[1]}${hex[2]}${hex[2]}${hex[3]}${hex[3]}` : hex;
     const match = fullHex.match(/^#([0-9a-f]{6})$/);

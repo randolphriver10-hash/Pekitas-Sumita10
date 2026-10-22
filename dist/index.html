@@ -45,6 +45,9 @@
   function pxTrack(evento, datos){
     try { if (typeof fbq === 'function') fbq('track', evento, datos || {}); } catch(e) { /* la medición nunca rompe la página */ }
   }
+  function pxTrackCustom(evento, datos){
+    try { if (typeof fbq === 'function') fbq('trackCustom', evento, datos || {}); } catch(e) { /* la medición nunca rompe la página */ }
+  }
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="index, follow">
@@ -3057,7 +3060,6 @@
     saveCart();
     updateBadge(); renderCart();
     showCartToast(product.name, product.img, product.price);
-    pxTrack('AddToCart', { content_ids: [String(product.id)], content_name: product.name, content_type: 'product', value: product.price * qty, currency: 'ARS' });
   }
   // Quita todas las combinaciones de este producto del carrito (la cantidad por
   // combinación se ajusta desde "Editar pedido", no con un stepper por línea acá)
@@ -3084,6 +3086,20 @@
     try { if (typeof gtag === 'function') gtag('event', 'contacto_whatsapp', { metodo: origen }); }
     catch (e) { /* la medición nunca puede romper el contacto real */ }
     pxTrack('Contact', { metodo: origen });
+  }
+  // Meta Pixel: qué modelo, talle y color se lleva el cliente. Un solo evento estándar por acción
+  // (así AddToCart / InitiateCheckout no se inflan) y un evento propio por cada variante (talle + color).
+  function pxDetalleLineas(lineas) {
+    return {
+      contents: lineas.map(l => ({ id: String(l.id), quantity: l.qty, item_price: l.price })),
+      variantes: lineas.map(l => [l.name, l.selectedSize ? 'Talle ' + l.selectedSize : '', l.selectedColor ? hexToColorName(l.selectedColor) : ''].filter(Boolean).join(' / ') + ' x' + l.qty).join(' | ')
+    };
+  }
+  function pxVariantes(evento, lineas) {
+    lineas.forEach(l => pxTrackCustom(evento, {
+      modelo: l.name, talle: l.selectedSize || '', color: l.selectedColor ? hexToColorName(l.selectedColor) : '',
+      cantidad: l.qty, value: l.price * l.qty, currency: 'ARS', content_ids: [String(l.id)]
+    }));
   }
   // Agrupa las líneas del carrito por producto para que el pedido de WhatsApp refleje
   // exactamente lo que el cliente eligió: cada talle/color/cantidad, sin resumir ni perder nada.
@@ -3117,7 +3133,10 @@
         gtag('event', 'begin_checkout', { currency: 'ARS', value: getTotal(), items });
       }
     } catch (e) { /* la medición nunca puede romper el checkout real */ }
-    pxTrack('InitiateCheckout', { content_ids: items.map(i => i.item_id), contents: items.map(i => ({ id: i.item_id, quantity: i.quantity })), num_items: items.reduce((s, i) => s + i.quantity, 0), value: getTotal(), currency: 'ARS' });
+    try {
+      pxTrack('InitiateCheckout', { content_type: 'product', content_ids: items.map(i => i.item_id), num_items: items.reduce((s, i) => s + i.quantity, 0), value: getTotal(), currency: 'ARS', ...pxDetalleLineas(cart) });
+      pxVariantes('VarianteEnPedido', cart);
+    } catch (e) { /* la medición nunca puede romper el checkout real */ }
     pxTrack('Contact', { metodo: 'checkout' });
     const ws = (window.PEKITAS_SETTINGS || {}).whatsappNumber || WHATSAPP_NUMBER;
     window.open(`https://wa.me/${ws}?text=${encodeURIComponent(msg)}`, '_blank');
@@ -3892,6 +3911,10 @@
     }
 
     lines.forEach(l => addToCart(null, { id:l.id, name:l.name, price:l.price, sub:l.sub, img:l.img, selectedColor:l.selectedColor, selectedSize:l.selectedSize }, l.qty));
+    try {
+      pxTrack('AddToCart', { content_type: 'product', content_ids: [String(p.id)], content_name: p.name, num_items: lines.reduce((s, l) => s + l.qty, 0), value: lines.reduce((s, l) => s + l.price * l.qty, 0), currency: 'ARS', ...pxDetalleLineas(lines) });
+      pxVariantes('VarianteAgregada', lines);
+    } catch (e) { /* la medición nunca puede romper agregar al carrito */ }
     closeProductModal();
     // Brief delay so close animation plays before cart opens
     setTimeout(() => {

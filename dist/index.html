@@ -27,6 +27,25 @@
   gtag('js', new Date());
   gtag('config', 'G-WMWCELHGES');
 </script>
+<!-- Meta Pixel (anuncios de Meta Ads). Respeta el mismo banner de cookies que GA4: mientras no se
+     acepte, el consentimiento queda revocado y no se envía nada. pxTrack nunca puede romper la página. -->
+<script>
+  !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+  n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+  t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+  document,'script','https://connect.facebook.net/en_US/fbevents.js');
+  (function(){
+    var saved = null;
+    try { saved = localStorage.getItem('pekitas_cookie_consent'); } catch(e) {}
+    if (saved !== 'granted') fbq('consent', 'revoke');
+  })();
+  fbq('init', '1817518389493890');
+  fbq('track', 'PageView');
+  function pxTrack(evento, datos){
+    try { if (typeof fbq === 'function') fbq('track', evento, datos || {}); } catch(e) { /* la medición nunca rompe la página */ }
+  }
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="index, follow">
   <meta name="author" content="Pekitas Sumita">
@@ -1887,7 +1906,7 @@
 <!-- COOKIE CONSENT BANNER -->
 <div class="cookie-banner" id="cookieBanner" role="dialog" aria-live="polite" aria-label="Preferencias de cookies">
   <div class="cookie-banner-text">
-    Usamos cookies propias y de análisis (Google Analytics) para entender cómo se usa el sitio y mejorarlo. Podés aceptarlas o rechazarlas — tu elección no afecta tu compra.
+    Usamos cookies propias y de análisis y publicidad (Google Analytics y Meta) para entender cómo se usa el sitio y mejorarlo. Podés aceptarlas o rechazarlas — tu elección no afecta tu compra.
   </div>
   <div class="cookie-banner-actions">
     <button class="cookie-btn cookie-btn-reject" id="cookieRejectBtn" type="button">Rechazar</button>
@@ -1908,6 +1927,7 @@
     if (typeof gtag === 'function') {
       gtag('consent', 'update', { 'analytics_storage': granted ? 'granted' : 'denied' });
     }
+    try { if (typeof fbq === 'function') fbq('consent', granted ? 'grant' : 'revoke'); } catch(e) {}
   }
   function hideBanner(){
     if (!banner) return;
@@ -3037,6 +3057,7 @@
     saveCart();
     updateBadge(); renderCart();
     showCartToast(product.name, product.img, product.price);
+    pxTrack('AddToCart', { content_ids: [String(product.id)], content_name: product.name, content_type: 'product', value: product.price * qty, currency: 'ARS' });
   }
   // Quita todas las combinaciones de este producto del carrito (la cantidad por
   // combinación se ajusta desde "Editar pedido", no con un stepper por línea acá)
@@ -3062,6 +3083,7 @@
   function trackWaClick(origen) {
     try { if (typeof gtag === 'function') gtag('event', 'contacto_whatsapp', { metodo: origen }); }
     catch (e) { /* la medición nunca puede romper el contacto real */ }
+    pxTrack('Contact', { metodo: origen });
   }
   // Agrupa las líneas del carrito por producto para que el pedido de WhatsApp refleje
   // exactamente lo que el cliente eligió: cada talle/color/cantidad, sin resumir ni perder nada.
@@ -3095,6 +3117,8 @@
         gtag('event', 'begin_checkout', { currency: 'ARS', value: getTotal(), items });
       }
     } catch (e) { /* la medición nunca puede romper el checkout real */ }
+    pxTrack('InitiateCheckout', { content_ids: items.map(i => i.item_id), contents: items.map(i => ({ id: i.item_id, quantity: i.quantity })), num_items: items.reduce((s, i) => s + i.quantity, 0), value: getTotal(), currency: 'ARS' });
+    pxTrack('Contact', { metodo: 'checkout' });
     const ws = (window.PEKITAS_SETTINGS || {}).whatsappNumber || WHATSAPP_NUMBER;
     window.open(`https://wa.me/${ws}?text=${encodeURIComponent(msg)}`, '_blank');
   }
@@ -3530,6 +3554,7 @@
     const p = getAllProducts().find(x => x.id === productId);
     if (!p) return;
     pmodalProduct = p;
+    pxTrack('ViewContent', { content_ids: [String(p.id)], content_name: p.name, content_type: 'product', value: p.price, currency: 'ARS' });
     const hasSizes = productSizes(p).length > 0;
 
     if (hasSizes) {

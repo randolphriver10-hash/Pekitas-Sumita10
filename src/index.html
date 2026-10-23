@@ -30,18 +30,28 @@
 <!-- Meta Pixel (anuncios de Meta Ads). Respeta el mismo banner de cookies que GA4: mientras no se
      acepte, el consentimiento queda revocado y no se envía nada. pxTrack nunca puede romper la página. -->
 <script>
-  !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-  n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
-  n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
-  t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
-  document,'script','https://connect.facebook.net/en_US/fbevents.js');
+  // El script de Meta NO se descarga hasta que el usuario acepta las cookies:
+  // sin consentimiento no hay conexión a connect.facebook.net ni eventos (pxTrack
+  // no hace nada mientras fbq no exista). Se carga al aceptar el banner o, si ya
+  // había aceptado antes, al entrar. La coincidencia automática avanzada queda
+  // apagada: el píxel solo manda los eventos que se disparan explícitamente.
+  function loadMetaPixel(){
+    if (window.fbq) return;
+    !function(f,b,e,v,n,t,s){n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+    n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+    document,'script','https://connect.facebook.net/en_US/fbevents.js');
+    fbq('set', 'autoConfig', false, '1817518389493890');
+    fbq('init', '1817518389493890');
+    fbq('track', 'PageView');
+  }
+  window.loadMetaPixel = loadMetaPixel;
   (function(){
     var saved = null;
     try { saved = localStorage.getItem('pekitas_cookie_consent'); } catch(e) {}
-    if (saved !== 'granted') fbq('consent', 'revoke');
+    if (saved === 'granted') loadMetaPixel();
   })();
-  fbq('init', '1817518389493890');
-  fbq('track', 'PageView');
   function pxTrack(evento, datos){
     try { if (typeof fbq === 'function') fbq('track', evento, datos || {}); } catch(e) { /* la medición nunca rompe la página */ }
   }
@@ -1930,7 +1940,14 @@
     if (typeof gtag === 'function') {
       gtag('consent', 'update', { 'analytics_storage': granted ? 'granted' : 'denied' });
     }
-    try { if (typeof fbq === 'function') fbq('consent', granted ? 'grant' : 'revoke'); } catch(e) {}
+    try {
+      if (granted) {
+        if (typeof window.loadMetaPixel === 'function') window.loadMetaPixel();
+        if (typeof fbq === 'function') fbq('consent', 'grant');
+      } else if (typeof fbq === 'function') {
+        fbq('consent', 'revoke');
+      }
+    } catch(e) {}
   }
   function hideBanner(){
     if (!banner) return;
